@@ -1,0 +1,81 @@
+<!-- Usamos el nuevo flujo de control @if de Angular -->
+@if (!loading && !errorMsg && cuentaData) {
+  <!-- Barra de acciones (se ocultará al imprimir) -->
+  <div class="actions-bar">
+    <button class="btn-print" (click)="imprimirCuenta()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M5 10v3h6v-3zm7 0v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3z"/>
+      </svg>
+      Imprimir / Guardar PDF
+    </button>
+  </div>
+
+  <!-- Contenedor de la cuenta -->
+  <div class="cuenta-container">
+    <div class="header-date">
+      Tlalnepantla de Baz, Estado de México a {{ cuentaData?.fechaEmision }}
+    </div>
+
+    <div class="info-section">
+      <div class="info-left">
+        <h2 class="paciente-name">{{ cuentaData?.nombrePaciente }}</h2>
+        <div class="medico-name">DR. {{ (cuentaData?.nombreMedico || '') | uppercase }}</div>
+      </div>
+      <div class="info-right text-right">
+        <div>SALIDA DE QX {{ cuentaData?.horaSalidaQx }}</div>
+        <div class="estancia-tag">ESTANCIA HOSPITALARIA</div>
+      </div>
+    </div>
+
+    <div class="table-title">
+      DESGLOSE DE GASTOS POR EVENTO HOSPITALARIO
+    </div>
+
+    <table class="cuenta-table">
+      <thead>
+        <tr>
+          <th>FECHA</th>
+          <th>ARTÍCULO / CONCEPTO</th>
+          <th class="text-center">CANT.</th>
+          <th class="text-right">PRECIO UNIT.</th>
+          <th class="text-right">IMPORTE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Usamos el nuevo flujo @for que es ultra rápido y seguro -->
+        @for (item of cuentaData?.detalles; track item) {
+          <tr>
+            <td>{{ item.fecha }}</td>
+            <td>{{ item.description }}</td>
+            <td class="text-center">{{ item.cantidad }}</td>
+            <td class="text-right">$ {{ (item.precioUnitario || 0) | number:'1.2-2' }}</td>
+            <td class="text-right">$ {{ (item.importe || 0) | number:'1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="totales-container">
+      <div class="totales-row">
+        <span class="total-label">SUBTOTAL</span>
+        <span class="total-value">$ {{ (cuentaData?.subtotal || 0) | number:'1.2-2' }}</span>
+      </div>
+      <div class="totales-row">
+        <span class="total-label">IVA (16%)</span>
+        <span class="total-value">$ {{ (cuentaData?.iva || 0) | number:'1.2-2' }}</span>
+      </div>
+      <div class="totales-row total-final">
+        <span class="total-label">TOTAL</span>
+        <span class="total-value">$ {{ (cuentaData?.total || 0) | number:'1.2-2' }}</span>
+      </div>
+    </div>
+  </div>
+}
+
+@if (loading) {
+  <div class="text-center padding-box">Cargando estado de cuenta...</div>
+}
+
+@if (errorMsg) {
+  <div class="error-box text-center">{{ errorMsg }}</div>
+}

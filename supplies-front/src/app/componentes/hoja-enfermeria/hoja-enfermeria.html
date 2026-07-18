@@ -7,28 +7,44 @@
     <div class="titulo-form">SUMINISTRO DE MATERIAL Y MEDICAMENTOS HOSPITAL</div>
   </div>
 
-  <!-- Cabecera de Datos del Paciente (Estructura idéntica al formato) -->
+  <!-- Cabecera de Datos del Paciente -->
   <div class="datos-paciente-grid">
+    <!-- Selector de Paciente/Evento -->
     <div class="campo c-2">
-      <label>NOMBRE DEL PACIENTE:</label>
-      <input type="text" formControlName="nombrePaciente" placeholder="Ej. Alejandro Sánchez López">
+      <label>SELECCIONAR PACIENTE / EVENTO:</label>
+      <select formControlName="eventoId" (change)="onEventoChange($event)" class="form-control-select">
+        <option [value]="null">-- Nuevo Paciente (Crear Registro) --</option>
+        <option *ngFor="let ev of listaEventosActivos" [value]="ev.id">
+          {{ ev.nombrePaciente }} - Hab: {{ ev.habitacion }}
+        </option>
+      </select>
     </div>
+
     <div class="campo">
       <label>FECHA:</label>
       <input type="date" formControlName="fecha">
     </div>
+
+    <div class="campo c-2">
+      <label>NOMBRE DEL PACIENTE:</label>
+      <input type="text" formControlName="nombrePaciente" placeholder="Ej. Alejandro Sánchez López" [readonly]="esModoEdicion">
+    </div>
+
     <div class="campo">
       <label>FECHA DE NACIMIENTO:</label>
       <input type="date" formControlName="fechaNacimiento">
     </div>
+
     <div class="campo">
       <label>HABITACIÓN:</label>
       <input type="text" formControlName="habitacion" placeholder="Ej. 5">
     </div>
+
     <div class="campo">
       <label>MÉDICO TRATANTE:</label>
       <input type="text" formControlName="medicoTratante" placeholder="Ej. Jesús Bernal">
     </div>
+
     <div class="campo">
       <label>PROCEDIMIENTO:</label>
       <input type="text" formControlName="procedimiento" placeholder="Ej. Circuncisión">
@@ -73,7 +89,7 @@
           <input type="date" formControlName="fechaAplicacion">
         </td>
         <td class="col-costeo">
-          $ {{ fila.get('costeo')?.value | number:'1.2-2' }}
+          $ {{ (fila.get('costeo')?.value || 0) | number:'1.2-2' }}
         </td>
         <td>
           <button type="button" class="btn-eliminar" (click)="eliminarFila(i)">✕</button>
@@ -82,10 +98,10 @@
     </tbody>
   </table>
 
-  <!-- Botón Añadir Fila (Estilo limpia-hojas) -->
+  <!-- Botón Añadir Fila -->
   <button type="button" class="btn-add" (click)="agregarFila()">+ Agregar Insumo</button>
 
-  <!-- Sección de Cuentas Automatizada (Desglose tipo Excel de Recepción) -->
+  <!-- Sección de Cuentas Automatizada (Desglose tipo Excel) -->
   <div class="seccion-totales">
     <div class="totales-box">
       <div class="total-row"><span>SUBTOTAL:</span> <span>$ {{ subtotal | number:'1.2-2' }}</span></div>
@@ -94,8 +110,16 @@
     </div>
   </div>
 
-  <!-- Guardado General -->
+  <!-- Acciones del Footer Separadas -->
   <div class="footer-actions">
-    <button type="button" class="btn-guardar" (click)="guardarHoja()">Guardar Hoja y Procesar Cuenta</button>
+    <!-- Botón de Persistencia Cambiante -->
+    <button type="button" class="btn-guardar" (click)="guardarOActualizarHoja()">
+      {{ esModoEdicion ? 'Actualizar Hoja de Enfermería' : 'Guardar Hoja de Enfermería' }}
+    </button>
+
+    <!-- Botón Exclusivo para Procesar Estado de Cuenta (Solo activo si hay un paciente guardado/existente) -->
+    <button type="button" class="btn-procesar" [disabled]="!idEventoActual" (click)="procesarCuenta()">
+      Procesar Estado de Cuenta →
+    </button>
   </div>
 </div>

@@ -4,7 +4,7 @@ import { HojaEnfermeriaComponent } from './componentes/hoja-enfermeria/hoja-enfe
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HojaEnfermeriaComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
