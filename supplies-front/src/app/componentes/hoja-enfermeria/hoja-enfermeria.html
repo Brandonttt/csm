@@ -1,0 +1,101 @@
+<div class="hoja-container" [formGroup]="hojaForm">
+  <!-- Encabezado Clínico -->
+  <div class="clinica-header">
+    <div class="logo-area">
+      <span class="nombre-clinica">Clínica de Especialidades SANTA MARÍA</span>
+    </div>
+    <div class="titulo-form">SUMINISTRO DE MATERIAL Y MEDICAMENTOS HOSPITAL</div>
+  </div>
+
+  <!-- Cabecera de Datos del Paciente (Estructura idéntica al formato) -->
+  <div class="datos-paciente-grid">
+    <div class="campo c-2">
+      <label>NOMBRE DEL PACIENTE:</label>
+      <input type="text" formControlName="nombrePaciente" placeholder="Ej. Alejandro Sánchez López">
+    </div>
+    <div class="campo">
+      <label>FECHA:</label>
+      <input type="date" formControlName="fecha">
+    </div>
+    <div class="campo">
+      <label>FECHA DE NACIMIENTO:</label>
+      <input type="date" formControlName="fechaNacimiento">
+    </div>
+    <div class="campo">
+      <label>HABITACIÓN:</label>
+      <input type="text" formControlName="habitacion" placeholder="Ej. 5">
+    </div>
+    <div class="campo">
+      <label>MÉDICO TRATANTE:</label>
+      <input type="text" formControlName="medicoTratante" placeholder="Ej. Jesús Bernal">
+    </div>
+    <div class="campo">
+      <label>PROCEDIMIENTO:</label>
+      <input type="text" formControlName="procedimiento" placeholder="Ej. Circuncisión">
+    </div>
+  </div>
+
+  <!-- Tabla del Suministro Físico -->
+  <table class="tabla-suministros">
+    <thead>
+      <tr>
+        <th style="width: 7%;">CANT.</th>
+        <th style="width: 35%;">ARTÍCULO</th>
+        <th style="width: 12%;">CANTIDAD RECIBIDA</th>
+        <th style="width: 12%;">INGRESO AL SISTEMA</th>
+        <th style="width: 12%;">FECHA</th>
+        <th style="width: 12%;">COSTEO</th>
+        <th style="width: 10%;">ACCIONES</th>
+      </tr>
+    </thead>
+    <tbody formArrayName="consumos">
+      <tr *ngFor="let fila of consumos.controls; let i=index" [formGroupName]="i">
+        <td>
+          <input type="number" formControlName="cantidad" class="input-center">
+        </td>
+        <td>
+          <select formControlName="insumoId" (change)="onInsumoChange(i)">
+            <option value="">-- Seleccionar Artículo --</option>
+            <option *ngFor="let insumo of catalogoInsumos" [value]="insumo.id">
+              {{ insumo.descripcion }} (${{ insumo.precioUnitario | number:'1.2-2' }})
+            </option>
+          </select>
+        </td>
+        <td>
+          <input type="number" formControlName="cantidadRecibida" class="input-center">
+        </td>
+        <td>
+          <div class="checkbox-wrapper">
+            <input type="checkbox" formControlName="ingresoAlSistema">
+          </div>
+        </td>
+        <td>
+          <input type="date" formControlName="fechaAplicacion">
+        </td>
+        <td class="col-costeo">
+          $ {{ fila.get('costeo')?.value | number:'1.2-2' }}
+        </td>
+        <td>
+          <button type="button" class="btn-eliminar" (click)="eliminarFila(i)">✕</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Botón Añadir Fila (Estilo limpia-hojas) -->
+  <button type="button" class="btn-add" (click)="agregarFila()">+ Agregar Insumo</button>
+
+  <!-- Sección de Cuentas Automatizada (Desglose tipo Excel de Recepción) -->
+  <div class="seccion-totales">
+    <div class="totales-box">
+      <div class="total-row"><span>SUBTOTAL:</span> <span>$ {{ subtotal | number:'1.2-2' }}</span></div>
+      <div class="total-row"><span>IVA (16%):</span> <span>$ {{ iva | number:'1.2-2' }}</span></div>
+      <div class="total-row total-final"><span>TOTAL:</span> <span>$ {{ total | number:'1.2-2' }}</span></div>
+    </div>
+  </div>
+
+  <!-- Guardado General -->
+  <div class="footer-actions">
+    <button type="button" class="btn-guardar" (click)="guardarHoja()">Guardar Hoja y Procesar Cuenta</button>
+  </div>
+</div>
