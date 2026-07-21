@@ -12,9 +12,9 @@ public class DetalleInsumoDTO {
     public DetalleInsumoDTO() {
     }
 
-    public DetalleInsumoDTO(String fecha, String descripcion, Integer cantidad,
+    public DetalleInsumoDTO(String fechaFormateada, String descripcion, Integer cantidad,
             BigDecimal precioUnitario, BigDecimal importe) {
-        this.fecha = fecha;
+        this.fecha = fechaFormateada;
         this.descripcion = descripcion;
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;

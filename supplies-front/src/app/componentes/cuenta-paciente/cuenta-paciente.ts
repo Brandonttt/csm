@@ -2,10 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, UpperCasePipe, DecimalPipe, NgIf, NgFor } from '@angular/common';
 import { SuministrosService } from '../../servicios/suministros'; // Ajusta la ruta a tu proyecto
 import { ActivatedRoute } from '@angular/router'; // 1. Importa ActivatedRoute
+import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-cuenta-paciente',
   imports: [
     CommonModule,
+    FormsModule,
     NgIf,
     NgFor,
     UpperCasePipe,
@@ -18,6 +20,7 @@ export class CuentaPacienteComponent implements OnInit {
   cuentaData: any = null;
   loading: boolean = true;
   errorMsg: string = '';
+  
 
   constructor(private suministrosService: SuministrosService, private route: ActivatedRoute, private cdr: ChangeDetectorRef) { }
  
@@ -62,4 +65,56 @@ cargarCuenta(eventoId: number): void {
    imprimirCuenta(): void {
     window.print();
   }
+  modoEdicion: boolean = false;
+
+toggleModoEdicion(): void {
+  this.modoEdicion = !this.modoEdicion;
+}
+  actualizarImporteFila(item: any): void {
+  // Recalculamos el importe del artículo modificado
+  const cant = item.cantidad || 0;
+  const precio = item.precioUnitario || 0;
+  item.importe = cant * precio;
+  
+  // Detonamos el recálculo general de la cuenta
+  this.recalcularTotales();
+}
+
+recalcularTotales(): void {
+  if (!this.cuentaData || !this.cuentaData.detalles) return;
+
+  let acumSubtotal = 0;
+  this.cuentaData.detalles.forEach((item: any) => {
+    acumSubtotal += item.importe || 0;
+  });
+
+  this.cuentaData.subtotal = acumSubtotal;
+  this.cuentaData.iva = this.cuentaData.subtotal * 0.16;
+  this.cuentaData.total = this.cuentaData.subtotal + this.cuentaData.iva;
+  
+  // Forzamos actualización visual por el refresh hook anterior
+  this.cdr.detectChanges();
+}
+copiarColumnasExcel(): void {
+  if (!this.cuentaData || !this.cuentaData.detalles.length) {
+    alert('No hay datos disponibles para copiar.');
+    return;
+  }
+
+  // Encabezados de las columnas
+  let contenidoTexto = "ARTÍCULO / CONCEPTO\tCANTIDAD\tPRECIO UNITARIO\tIMPORTE\n";
+
+  // Rellenamos con las celdas editadas
+  this.cuentaData.detalles.forEach((item: any) => {
+    contenidoTexto += `${item.description}\t${item.cantidad}\t${item.precioUnitario}\t${item.importe}\n`;
+  });
+
+  // Usamos la API del Navegador para copiar directamente
+  navigator.clipboard.writeText(contenidoTexto).then(() => {
+    alert('¡Columnas copiadas al portapapeles! Abre Excel y presiona Ctrl + V.');
+  }).catch(err => {
+    console.error('Error al copiar al portapapeles', err);
+    alert('No se pudo copiar automáticamente.');
+  });
+}
 }

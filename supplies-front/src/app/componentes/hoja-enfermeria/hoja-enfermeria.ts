@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { SuministrosService } from '../../servicios/suministros';
 import { Router } from '@angular/router';
+
 
 @Component({
   selector: 'app-hoja-enfermeria',
@@ -17,12 +18,7 @@ export class HojaEnfermeriaComponent implements OnInit {
   apiBaseUrl = 'http://localhost:8082/api'; // Puerto 8082 configurado en tu Backend
 
   // Simulación de catálogo para el autocompletado
-  catalogoInsumos = [
-    { id: 1, descripcion: 'Paracetamol 1 gr', precioUnitario: 310.00, tipo: 'MEDICAMENTO' },
-    { id: 2, descripcion: 'Clonixinato de Lisina', precioUnitario: 178.00, tipo: 'MEDICAMENTO' },
-    { id: 3, descripcion: 'Jeringa 5 cc', precioUnitario: 19.00, tipo: 'MATERIAL' },
-    { id: 4, descripcion: 'Guantes no esteriles', precioUnitario: 36.00, tipo: 'MATERIAL' }
-  ];
+  catalogoInsumos: any[] = [];
 
   // Nuevas variables de control clínico
   listaEventosActivos: any[] = [];
@@ -37,20 +33,31 @@ export class HojaEnfermeriaComponent implements OnInit {
     private fb: FormBuilder, 
     private http: HttpClient, 
     private suministrosService: SuministrosService, 
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
+  obtenerFechaLocal(): string {
+  const hoy = new Date();
+  const year = hoy.getFullYear();
+  const month = String(hoy.getMonth() + 1).padStart(2, '0');
+  const day = String(hoy.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
   ngOnInit(): void {
+    this.cargarCatalogoInsumos();
     this.hojaForm = this.fb.group({
       eventoId: [null], // Añadido para controlar el select del HTML
       nombrePaciente: ['', Validators.required],
-      fecha: [new Date().toISOString().substring(0, 10), Validators.required],
+      fecha: [this.obtenerFechaLocal(), Validators.required],
       fechaNacimiento: [''],
       habitacion: [''],
       medicoTratante: ['', Validators.required],
       procedimiento: [''],
       consumos: this.fb.array([]) 
     });
+    
 
     // Cargar pacientes con eventos activos desde el nacimiento del componente
     this.cargarEventosActivos();
@@ -63,25 +70,41 @@ export class HojaEnfermeriaComponent implements OnInit {
       this.calcularTotales();
     });
   }
+  cargarCatalogoInsumos(): void {
+    // Si tu servicio no tiene la función aún, consumimos directamente el endpoint de Java:
+    this.http.get<any[]>(`${this.apiBaseUrl}/consumos/insumos`).subscribe({
+      next: (insumosBD) => {
+        this.catalogoInsumos = insumosBD;
+        console.log('Catálogo de insumos cargado con éxito:', this.catalogoInsumos.length, 'artículos.');
+        if (this.idEventoActual) {
+        this.calcularTotales();
+      }
+      },
+      error: (err) => {
+        console.error('Error al cargar el catálogo de insumos de la base de datos:', err);
+      }
+    });
+  }
 
   get consumos(): FormArray {
     return this.hojaForm.get('consumos') as FormArray;
   }
 
-  crearFilaConsumo(): FormGroup {
+  crearFilaConsumo(turnoColor: string = 'azul'): FormGroup {
     return this.fb.group({
       insumoId: ['', Validators.required],
       cantidad: [1, [Validators.required, Validators.min(1)]],
       cantidadRecibida: [''],
       ingresoAlSistema: [false],
-      fechaAplicacion: [new Date().toISOString().substring(0, 10)],
+      fechaAplicacion: [this.obtenerFechaLocal()],
       precioUnitario: [{ value: 0, disabled: true }],
-      costeo: [{ value: 0, disabled: true }]
+      costeo: [{ value: 0, disabled: true }],
+      turno: [turnoColor]
     });
   }
 
-  agregarFila(): void {
-    this.consumos.push(this.crearFilaConsumo());
+  agregarFila(turnoColor: string = 'azul'): void {
+    this.consumos.push(this.crearFilaConsumo(turnoColor));
   }
 
   eliminarFila(index: number): void {
@@ -92,12 +115,17 @@ export class HojaEnfermeriaComponent implements OnInit {
       this.consumos.at(index).reset({
         cantidad: 1,
         ingresoAlSistema: false,
-        fechaAplicacion: new Date().toISOString().substring(0, 10),
+        fechaAplicacion: this.obtenerFechaLocal(),
         precioUnitario: 0,
         costeo: 0
       });
     }
   }
+    obtenerNombreInsumo(insumoId: any): string {
+      if (!insumoId) return '';
+      const insumo = this.catalogoInsumos.find(i => i.id == insumoId);
+      return insumo ? insumo.descripcion : '';
+    }
 
   // Invoca el endpoint para poblar el dropdown superior de pacientes activos
   cargarEventosActivos(): void {
@@ -132,7 +160,7 @@ export class HojaEnfermeriaComponent implements OnInit {
       this.hojaForm.reset({
         eventoId: null,
         nombrePaciente: '',
-        fecha: new Date().toISOString().substring(0, 10),
+        fecha: this.obtenerFechaLocal(),
         fechaNacimiento: '',
         habitacion: '',
         medicoTratante: '',
@@ -187,7 +215,7 @@ export class HojaEnfermeriaComponent implements OnInit {
   onInsumoChange(index: number): void {
     const fila = this.consumos.at(index);
     const insumoSeleccionadoId = fila.get('insumoId')?.value;
-    const insumo = this.catalogoInsumos.find(i => i.id == insumoSeleccionadoId);
+    const insumo = this.catalogoInsumos.find(i => (i.id || i.idInsumo) == insumoSeleccionadoId);
 
     if (insumo) {
       fila.patchValue({
@@ -302,4 +330,7 @@ this.http.post('http://localhost:8082/api/consumos/evento', nuevaCabecera).subsc
       alert('Es necesario almacenar o seleccionar una hoja de enfermería antes de procesar el estado de cuenta.');
     }
   }
+  imprimirHoja(): void {
+  window.print();
+}
 }

@@ -1,171 +1,198 @@
 .cuenta-container {
   max-width: 900px;
-  margin: 20px auto;
+  margin: 0 auto;
   padding: 30px;
   background-color: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333333;
-
-  .header-date {
-    text-align: center;
-    font-size: 14px;
-    margin-bottom: 25px;
-    font-weight: 500;
-  }
-
-  .info-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 20px;
-    
-    .paciente-name {
-      font-size: 18px;
-      font-weight: bold;
-      margin: 0 0 5px 0;
-      letter-spacing: 0.5px;
-    }
-
-    .medico-name {
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .info-right {
-      font-size: 13px;
-      font-weight: 500;
-      
-      .estancia-tag {
-        font-weight: bold;
-        margin-top: 2px;
-      }
-    }
-  }
-
-  .table-title {
-    background-color: #a4c2f4;
-    color: #000000;
-    text-align: center;
-    font-weight: bold;
-    padding: 6px;
-    font-size: 14px;
-    letter-spacing: 0.5px;
-    border: 1px solid #d9d9d9;
-    border-bottom: none;
-  }
-
-  .cuenta-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-
-    th, td {
-      border: 1px solid #e0e0e0;
-      padding: 6px 10px;
-      vertical-align: middle;
-    }
-
-    th {
-      background-color: #f8f9fa;
-      font-weight: bold;
-      text-align: left;
-    }
-
-    tbody tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-  }
-
-  .totales-container {
-    margin-top: -1px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-
-    .totales-row {
-      display: flex;
-      width: 350px;
-      border: 1px solid #e0e0e0;
-      border-top: none;
-      font-size: 13px;
-
-      .total-label {
-        width: 60%;
-        padding: 6px 10px;
-        font-weight: bold;
-        text-align: right;
-        background-color: #f8f9fa;
-        border-right: 1px solid #e0e0e0;
-      }
-
-      .total-value {
-        width: 40%;
-        padding: 6px 10px;
-        text-align: right;
-        font-weight: 500;
-      }
-
-      &.total-final {
-        background-color: #fff2cc;
-        border: 2px solid #ffd966;
-        font-size: 14px;
-        
-        .total-label {
-          background-color: #ffd966;
-          font-weight: bold;
-        }
-
-        .total-value {
-          font-weight: bold;
-        }
-      }
-    }
-  }
-
-  .text-right { text-align: right; }
-  .text-center { text-align: center; }
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #2d3748;
 }
-.actions-bar {
-  max-width: 900px;
-  margin: 20px auto 0 auto;
-  display: flex;
-  justify-content: flex-end;
 
-  .btn-print {
-    background-color: #4a777a; // Color formal corporativo
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 14px;
+/* Botones Superiores */
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-bottom: 25px;
+
+  button {
+    padding: 10px 18px;
     font-weight: bold;
     border-radius: 4px;
+    border: none;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.2s;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
 
-    &:hover {
-      background-color: #3b5e61;
+  .btn-pdf { background-color: #319795; color: white; &:hover { background-color: #2c7a7b; } }
+  .btn-excel { background-color: #2f855a; color: white; &:hover { background-color: #22543d; } }
+  .btn-editar { 
+    background-color: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; 
+    &.activo { background-color: #3182ce; color: white; }
+  }
+}
+
+/* Encabezados y Datos Paciente */
+.fecha-encabezado {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 30px;
+  color: #1a202c;
+  font-weight: 500;
+}
+
+.info-paciente-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+
+  .nombre-paciente {
+    margin: 0 0 6px 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a202c;
+  }
+
+  .nombre-doctor {
+    margin: 0;
+    font-size: 14px;
+    color: #4a5568;
+    font-weight: bold;
+  }
+
+  .datos-qx {
+    text-align: right;
+    font-size: 13px;
+    font-weight: bold;
+    color: #2d3748;
+    line-height: 1.4;
+  }
+}
+
+/* Estructura Exacta de la Tabla */
+.tabla-desglose {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+
+  .banner-titulo th {
+    background-color: #a3c1f7; /* Azul exacto de la barra superior */
+    color: #000;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+
+  .cabeceras-columnas th {
+    background-color: #f7fafc;
+    border-bottom: 1px solid #cbd5e0;
+    border-top: 1px solid #cbd5e0;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #2d3748;
+  }
+
+  tbody td {
+    padding: 8px 10px;
+    font-size: 13px;
+    border-bottom: 1px solid #edf2f7;
+    color: #2d3748;
+  }
+
+  /* Alineaciones de Columnas */
+  .col-center { text-align: center; }
+  .col-left { text-align: left; }
+  .col-right { text-align: right; }
+  .bold { font-weight: 600; }
+
+  /* Bloque de Totales Inferior */
+  tfoot {
+    td.sin-borde { border: none; }
+
+    .total-label, .total-label-final {
+      text-align: right;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      background-color: #f7fafc;
+      border-left: 1px solid #cbd5e0;
+      border-bottom: 1px solid #cbd5e0;
+    }
+
+    .total-value, .total-value-final {
+      text-align: right;
+      padding: 6px 12px;
+      font-size: 13px;
+      border-right: 1px solid #cbd5e0;
+      border-bottom: 1px solid #cbd5e0;
+    }
+
+    .row-total-final {
+      .total-label-final {
+        background-color: #ffeb9c; /* Amarillo dorado exacto del total */
+        border-bottom: 1px solid #d69e2e;
+      }
+      .total-value-final {
+        background-color: #ffeb9c;
+        font-weight: bold;
+        font-size: 15px;
+        border-bottom: 1px solid #d69e2e;
+      }
     }
   }
 }
-// 🚀 REGLA MÁGICA DE IMPRESIÓN: Oculta elementos innecesarios en el papel/PDF
+
+/* Estilos de Edición Suaves (Invisibles al imprimir) */
+.input-table-inline {
+  width: 90%;
+  border: 1px solid #cbd5e0;
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  background-color: #fffaf0;
+
+  &.center { text-align: center; }
+  &.left { text-align: left; }
+  &.right { text-align: right; }
+}
+
+.input-inline-header {
+  border: 1px solid #cbd5e0;
+  border-radius: 3px;
+  padding: 4px 8px;
+  background-color: #fffaf0;
+  font-family: inherit;
+
+  &.paciente { font-size: 18px; font-weight: bold; width: 100%; }
+  &.medico { font-size: 13px; width: 80%; }
+}
+
+.currency-edit {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* Reglas de Impresión Impecables */
 @media print {
-  .actions-bar {
-    display: none !important; // Desaparece el botón
+  .no-print {
+    display: none !important;
   }
 
   body {
-    background-color: #ffffff;
+    background-color: #ffffff !important;
   }
 
   .cuenta-container {
-    margin: 0 !important;
     padding: 0 !important;
+    margin: 0 !important;
     max-width: 100% !important;
     box-shadow: none !important;
   }
 }
-
-.padding-box { padding: 40px; font-weight: 500; }
-.error-box { color: #dc3545; padding: 20px; font-weight: bold; }

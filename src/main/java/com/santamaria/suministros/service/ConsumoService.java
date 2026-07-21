@@ -36,19 +36,29 @@ public class ConsumoService {
         EventoHospitalario evento = eventoHospitalarioRepository.findById(eventoId)
                 .orElseThrow(() -> new RuntimeException("No se encontró el evento hospitalario con ID: " + eventoId));
 
-        // 2. Recuperar todos los insumos consumidos en ese evento
         List<DetalleConsumo> consumos = detalleConsumoRepository.findByEventoId(eventoId);
 
-        // 3. Mapear cada consumo al formato del renglón DTO
         List<DetalleInsumoDTO> detallesDTO = consumos.stream().map(c -> {
-            String fechaFormateada = c.getFechaAplicacion() != null ? c.getFechaAplicacion().format(dateFormatter) : "";
-            String descripcion = c.getInsumo().getDescripcion();
-            Integer cantidad = c.getCantidad();
-            BigDecimal precioUnit = c.getInsumo().getPrecioUnitario();
+            // 1. Formatear la fecha de aplicación (Verifica que no venga nula)
+            String fechaFormateada = "";
+            if (c.getFechaAplicacion() != null) {
+                fechaFormateada = c.getFechaAplicacion().format(dateFormatter); // ej: "18/07/2026"
+            }
 
-            // Importe = Cantidad * Precio Unitario
+            // 2. Obtener la descripción del insumo relacionado
+            String descripcion = "";
+            if (c.getInsumo() != null && c.getInsumo().getDescripcion() != null) {
+                descripcion = c.getInsumo().getDescripcion();
+            }
+
+            Integer cantidad = c.getCantidad() != null ? c.getCantidad() : 0;
+            BigDecimal precioUnit = (c.getInsumo() != null && c.getInsumo().getPrecioUnitario() != null)
+                    ? c.getInsumo().getPrecioUnitario()
+                    : BigDecimal.ZERO;
+
             BigDecimal importe = precioUnit.multiply(BigDecimal.valueOf(cantidad));
 
+            // 3. Pasar las variables al DTO de respuesta
             return new DetalleInsumoDTO(fechaFormateada, descripcion, cantidad, precioUnit, importe);
         }).collect(Collectors.toList());
 

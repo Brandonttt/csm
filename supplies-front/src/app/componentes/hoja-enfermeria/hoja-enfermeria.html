@@ -10,7 +10,7 @@
   <!-- Cabecera de Datos del Paciente -->
   <div class="datos-paciente-grid">
     <!-- Selector de Paciente/Evento -->
-    <div class="campo c-2">
+    <div class="campo c-2 no-print">
       <label>SELECCIONAR PACIENTE / EVENTO:</label>
       <select formControlName="eventoId" (change)="onEventoChange($event)" class="form-control-select">
         <option [value]="null">-- Nuevo Paciente (Crear Registro) --</option>
@@ -61,45 +61,73 @@
         <th style="width: 12%;">INGRESO AL SISTEMA</th>
         <th style="width: 12%;">FECHA</th>
         <th style="width: 12%;">COSTEO</th>
-        <th style="width: 10%;">ACCIONES</th>
+        <th style="width: 10%;" class="no-print">ACCIONES</th>
       </tr>
     </thead>
     <tbody formArrayName="consumos">
-      <tr *ngFor="let fila of consumos.controls; let i=index" [formGroupName]="i">
+      <tr *ngFor="let fila of consumos.controls; let i=index" 
+          [formGroupName]="i" 
+          [ngClass]="'turno-' + fila.get('turno')?.value">
+        
         <td>
           <input type="number" formControlName="cantidad" class="input-center">
         </td>
+
         <td>
-          <select formControlName="insumoId" (change)="onInsumoChange(i)">
-            <option value="">-- Seleccionar Artículo --</option>
-            <option *ngFor="let insumo of catalogoInsumos" [value]="insumo.id">
-              {{ insumo.descripcion }} (${{ insumo.precioUnitario | number:'1.2-2' }})
+          <!-- Vista interactiva (Pantalla) -->
+          <select formControlName="insumoId" 
+                  (change)="onInsumoChange(i)" 
+                  class="form-control-select no-print"
+                  [ngClass]="'select-' + fila.get('turno')?.value">
+            <option [ngValue]="null">-- Seleccionar Artículo --</option>
+            <option *ngFor="let insumo of catalogoInsumos" [ngValue]="insumo.id || insumo.idInsumo">
+              {{ insumo.descripcion || insumo.nombre }} (${{ (insumo.precioUnitario || insumo.precio_unitario || insumo.precio || 0) | number:'1.2-2' }})
             </option>
           </select>
+
+          <!-- Vista de texto plano (PDF / Impresión) -->
+          <span class="only-print texto-impresion-insumo" [ngClass]="'texto-' + fila.get('turno')?.value">
+            {{ obtenerNombreInsumo(fila.get('insumoId')?.value) }}
+          </span>
         </td>
+
         <td>
           <input type="number" formControlName="cantidadRecibida" class="input-center">
         </td>
+
         <td>
           <div class="checkbox-wrapper">
             <input type="checkbox" formControlName="ingresoAlSistema">
           </div>
         </td>
+
         <td>
           <input type="date" formControlName="fechaAplicacion">
         </td>
+
         <td class="col-costeo">
           $ {{ (fila.get('costeo')?.value || 0) | number:'1.2-2' }}
         </td>
-        <td>
+
+        <td class="no-print">
           <button type="button" class="btn-eliminar" (click)="eliminarFila(i)">✕</button>
         </td>
       </tr>
     </tbody>
   </table>
 
-  <!-- Botón Añadir Fila -->
-  <button type="button" class="btn-add" (click)="agregarFila()">+ Agregar Insumo</button>
+  <!-- Botones Añadir Fila por Turno -->
+  <div class="acciones-turnos no-print">
+    <button type="button" class="btn-turno azul" (click)="agregarFila('azul')">
+      + Insumo (Matutino)
+    </button>
+    <button type="button" class="btn-turno verde" (click)="agregarFila('verde')">
+      + Insumo (Vespertino)
+    </button>
+    <button type="button" class="btn-turno rojo" (click)="agregarFila('rojo')">
+      + Insumo (Nocturno)
+    </button>
+  </div>
 
   <!-- Sección de Cuentas Automatizada (Desglose tipo Excel) -->
   <div class="seccion-totales">
@@ -111,13 +139,18 @@
   </div>
 
   <!-- Acciones del Footer Separadas -->
-  <div class="footer-actions">
+  <div class="footer-actions no-print">
     <!-- Botón de Persistencia Cambiante -->
     <button type="button" class="btn-guardar" (click)="guardarOActualizarHoja()">
       {{ esModoEdicion ? 'Actualizar Hoja de Enfermería' : 'Guardar Hoja de Enfermería' }}
     </button>
 
-    <!-- Botón Exclusivo para Procesar Estado de Cuenta (Solo activo si hay un paciente guardado/existente) -->
+    <!-- Botón de Impresión -->
+    <button type="button" class="btn-imprimir-hoja" (click)="imprimirHoja()">
+      🖨️ Imprimir / Guardar PDF
+    </button>
+
+    <!-- Botón Exclusivo para Procesar Estado de Cuenta -->
     <button type="button" class="btn-procesar" [disabled]="!idEventoActual" (click)="procesarCuenta()">
       Procesar Estado de Cuenta →
     </button>

@@ -6,6 +6,8 @@ import com.santamaria.suministros.model.EventoHospitalario;
 import com.santamaria.suministros.repository.DetalleConsumoRepository;
 import com.santamaria.suministros.repository.EventoHospitalarioRepository;
 import com.santamaria.suministros.service.ConsumoService;
+import com.santamaria.suministros.repository.InsumoRepository;
+import com.santamaria.suministros.model.Insumo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,14 @@ public class ConsumoController {
     private ConsumoService consumoService;
     @Autowired
     private EventoHospitalarioRepository eventoHospitalarioRepository;
+    @Autowired
+    private InsumoRepository insumoRepository;
+
+    @GetMapping("/insumos") // o /catalogo
+    public ResponseEntity<List<Insumo>> obtenerCatalogoInsumos() {
+        List<Insumo> lista = insumoRepository.findAll();
+        return ResponseEntity.ok(lista);
+    }
 
     // POST para guardar un nuevo consumo desde la hoja de enfermería
     @PostMapping
