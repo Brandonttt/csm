@@ -6,7 +6,8 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "detalle_consumos")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class DetalleConsumo {
@@ -34,4 +35,7 @@ public class DetalleConsumo {
 
     @Column(name = "ingreso_al_sistema")
     private Boolean ingresoAlSistema = false;
+
+    @Column(name = "turno")
+    private String turno; // 👈 Guardará "azul
 }

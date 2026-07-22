@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
 })
 export class HojaEnfermeriaComponent implements OnInit {
   hojaForm!: FormGroup;
-  apiBaseUrl = 'http://localhost:8082/api'; // Puerto 8082 configurado en tu Backend
+  apiBaseUrl = 'http://192.168.100.10:8082/api'; // Puerto 8082 configurado en tu Backend
 
   // Simulación de catálogo para el autocompletado
   catalogoInsumos: any[] = [];
@@ -177,10 +177,11 @@ export class HojaEnfermeriaComponent implements OnInit {
 
   // Rellena la estructura del formulario reactivo con la información del backend
   mapearDatosAlFormulario(data: any): void {
+    const fechaNacLimpia = data.fechaNacimiento ? String(data.fechaNacimiento).substring(0, 10) : '';
     this.hojaForm.patchValue({
       nombrePaciente: data.nombrePaciente,
       fecha: data.fecha,
-      fechaNacimiento: data.fechaNacimiento,
+      fechaNacimiento: fechaNacLimpia,
       habitacion: data.habitacion,
       medicoTratante: data.nombreMedico,
       procedimiento: data.procedimiento
@@ -194,6 +195,7 @@ export class HojaEnfermeriaComponent implements OnInit {
     // Si el paciente cuenta con consumos previos cargados, los inyectamos en la tabla
     if (data.detalles && data.detalles.length > 0) {
       data.detalles.forEach((det: any) => {
+        const turnoGuardado = det.turno || det.colorTurno || 'azul';
         const filaGroup = this.fb.group({
           insumoId: [det.insumoId, Validators.required],
           cantidad: [det.cantidad, [Validators.required, Validators.min(1)]],
@@ -201,7 +203,8 @@ export class HojaEnfermeriaComponent implements OnInit {
           ingresoAlSistema: [det.ingresoAlSistema || false],
           fechaAplicacion: [det.fecha],
           precioUnitario: [{ value: det.precioUnitario || 0, disabled: true }],
-          costeo: [{ value: (det.cantidad * det.precioUnitario) || 0, disabled: true }]
+          costeo: [{ value: (det.cantidad * det.precioUnitario) || 0, disabled: true }],
+          turno: [turnoGuardado] // 👈 AHORA PRESERVA EL TURNO REGISTRADO
         });
         this.consumos.push(filaGroup);
       });
@@ -244,84 +247,83 @@ export class HojaEnfermeriaComponent implements OnInit {
 
   // ACCIÓN 1: Guarda o actualiza exclusivamente los datos persistentes del backend
   guardarOActualizarHoja(): void {
-  if (this.hojaForm.invalid) {
-    alert('Por favor llena los campos obligatorios de la cabecera');
-    return;
-  }
-
   const datosFormulario = this.hojaForm.getRawValue();
 
   if (this.esModoEdicion && this.idEventoActual) {
     // -------------------------------------------------------
-    // MODO EDICIÓN: El evento ya existe, actualizamos insumos
+    // MODO EDICIÓN: Actualizar Cabecera + Consumos
     // -------------------------------------------------------
-    const listaParaBackend = datosFormulario.consumos.map((c: any) => ({
-      evento: { id: this.idEventoActual }, // ID real del paciente seleccionado
-      insumo: { id: c.insumoId },
-      cantidad: c.cantidad,
-      fechaAplicacion: c.fechaAplicacion,
-      cantidadRecibida: c.cantidadRecibida,
-      ingresoAlSistema: c.ingresoAlSistema
-    }));
-
-    this.suministrosService.actualizarHojaConsumos(this.idEventoActual, listaParaBackend).subscribe({
-      next: (respuesta: any) => {
-        alert('¡Insumos actualizados con éxito!');
-        this.cargarEventosActivos();
-      },
-      error: (err) => console.error(err)
-    });
-
-  } else {
-   const nuevaCabecera = {
+    const payloadEdicion = {
+      eventoId: this.idEventoActual,
       habitacion: datosFormulario.habitacion,
       procedimiento: datosFormulario.procedimiento,
       fecha: datosFormulario.fecha,
-      // Pasamos los datos en formato de objeto para que encajen con tus relaciones de Spring
+      paciente: {
+        nombre: datosFormulario.nombrePaciente,
+        fechaNacimiento: datosFormulario.fechaNacimiento
+      },
+      medico: {
+        nombre: datosFormulario.medicoTratante
+      },
+      consumos: datosFormulario.consumos.map((c: any) => ({
+        insumoId: c.insumoId,
+        cantidad: c.cantidad,
+        cantidadRecibida: c.cantidadRecibida,
+        ingresoAlSistema: c.ingresoAlSistema,
+        fechaAplicacion: c.fechaAplicacion,
+        turno: c.turno
+      }))
+    };
+
+    // Petición al backend para actualizar evento completo
+    this.http.put(`${this.apiBaseUrl}/consumos/evento/${this.idEventoActual}`, payloadEdicion).subscribe({
+      next: () => {
+        alert('¡Hoja de enfermería y datos del paciente actualizados con éxito!');
+        this.cargarEventosActivos();
+      },
+      error: (err) => {
+        console.error('Error al actualizar evento:', err);
+        alert('Ocurrió un error al actualizar los datos.');
+      }
+    });
+
+  } else {
+    // -------------------------------------------------------
+    // MODO CREACIÓN NUEVO
+    // -------------------------------------------------------
+    const nuevaCabecera = {
+      habitacion: datosFormulario.habitacion,
+      procedimiento: datosFormulario.procedimiento,
+      fecha: datosFormulario.fecha,
       paciente: { 
         nombre: datosFormulario.nombrePaciente,
         fechaNacimiento: datosFormulario.fechaNacimiento
       },
       medico: { 
         nombre: datosFormulario.medicoTratante 
-      }
+      },
+      consumos: datosFormulario.consumos.map((c: any) => ({
+        insumoId: c.insumoId,
+        cantidad: c.cantidad,
+        cantidadRecibida: c.cantidadRecibida,
+        ingresoAlSistema: c.ingresoAlSistema,
+        fechaAplicacion: c.fechaAplicacion,
+        turno: c.turno
+      }))
     };
 
- // Enviamos la petición POST para registrar la cabecera del evento
-this.http.post('http://localhost:8082/api/consumos/evento', nuevaCabecera).subscribe({
-  next: (eventoGuardado: any) => {
-    const idGenerado = eventoGuardado.id; // Obtenemos el ID real generado dinámicamente
-    this.idEventoActual = idGenerado;
-
-    // 2. Mapeamos la lista de consumos vinculándolos al ID real obtenido
-    const listaConsumosNuevos = datosFormulario.consumos.map((c: any) => ({
-      evento: { id: idGenerado }, // Vinculación dinámica real
-      insumo: { id: c.insumoId },
-      cantidad: c.cantidad,
-      fechaAplicacion: c.fechaAplicacion,
-      cantidadRecibida: c.cantidadRecibida,
-      ingresoAlSistema: c.ingresoAlSistema
-    }));
-
-    // 3. Guardamos los consumos de forma masiva
-    this.suministrosService.guardarHojaConsumos(listaConsumosNuevos).subscribe({
-      next: () => {
-        alert('¡Hoja de enfermería y nuevo evento registrados correctamente!');
+    this.http.post(`${this.apiBaseUrl}/consumos/evento`, nuevaCabecera).subscribe({
+      next: (res: any) => {
+        alert('¡Paciente y Hoja de Enfermería registrados correctamente!');
         this.esModoEdicion = true;
-        this.hojaForm.get('eventoId')?.setValue(idGenerado, { emitEvent: false });
+        this.idEventoActual = typeof res === 'object' ? res.id : res;
+        this.hojaForm.get('eventoId')?.setValue(this.idEventoActual, { emitEvent: false });
         this.cargarEventosActivos();
       },
-      error: (err) => alert('Error al registrar la lista de insumos del nuevo paciente.')
+      error: (err) => console.error('Error al guardar evento nuevo:', err)
     });
-  },
-  error: (err) => {
-    alert('Error al registrar los datos de la cabecera clínica.');
-    console.error(err);
-  }
-});
   }
 }
-
   // ACCIÓN 2: Procesa la redirección limpia al desglose contable dinámico
   procesarCuenta(): void {
     if (this.idEventoActual) {

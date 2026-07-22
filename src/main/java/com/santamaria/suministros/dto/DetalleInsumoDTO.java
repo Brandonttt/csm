@@ -8,17 +8,19 @@ public class DetalleInsumoDTO {
     private Integer cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal importe;
+    private String turno; // 👈 Guardará "azul", "rojo" o "verde"
 
     public DetalleInsumoDTO() {
     }
 
     public DetalleInsumoDTO(String fechaFormateada, String descripcion, Integer cantidad,
-            BigDecimal precioUnitario, BigDecimal importe) {
+            BigDecimal precioUnitario, BigDecimal importe, String turno) {
         this.fecha = fechaFormateada;
         this.descripcion = descripcion;
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;
         this.importe = importe;
+        this.turno = turno; // Valor predeterminado
     }
 
     // Getters y Setters
@@ -60,5 +62,13 @@ public class DetalleInsumoDTO {
 
     public void setImporte(BigDecimal importe) {
         this.importe = importe;
+    }
+
+    public String getTurno() {
+        return turno;
+    }
+
+    public void setTurno(String turno) {
+        this.turno = turno;
     }
 }

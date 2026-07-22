@@ -1,4 +1,21 @@
 <div class="hoja-container" [formGroup]="hojaForm">
+
+  <!-- BARRA DE CONTROL DE SISTEMA (Solo pantalla) -->
+  <div class="barra-seleccion-paciente no-print">
+    <div class="selector-info">
+      <span class="label-icono">👤 BUSCAR / SELECCIONAR PACIENTE ACTIVO:</span>
+      <select id="selectEvento" formControlName="eventoId" (change)="onEventoChange($event)" class="select-paciente-moderno">
+        <option [value]="null">➕ -- Nuevo Paciente (Crear Registro Limpio) --</option>
+        <option *ngFor="let ev of listaEventosActivos" [value]="ev.id">
+          🏥 {{ ev.nombrePaciente }} | Habitación: {{ ev.habitacion }}
+        </option>
+      </select>
+    </div>
+    
+    <div class="status-badge" [class.edicion]="esModoEdicion">
+      {{ esModoEdicion ? '✏️ Modo: Editando Registro Existente' : '🆕 Modo: Nuevo Registro' }}
+    </div>
+  </div>
   <!-- Encabezado Clínico -->
   <div class="clinica-header">
     <div class="logo-area">
@@ -8,46 +25,35 @@
   </div>
 
   <!-- Cabecera de Datos del Paciente -->
-  <div class="datos-paciente-grid">
-    <!-- Selector de Paciente/Evento -->
-    <div class="campo c-2 no-print">
-      <label>SELECCIONAR PACIENTE / EVENTO:</label>
-      <select formControlName="eventoId" (change)="onEventoChange($event)" class="form-control-select">
-        <option [value]="null">-- Nuevo Paciente (Crear Registro) --</option>
-        <option *ngFor="let ev of listaEventosActivos" [value]="ev.id">
-          {{ ev.nombrePaciente }} - Hab: {{ ev.habitacion }}
-        </option>
-      </select>
+<div class="datos-paciente-grid">
+    <div class="campo c-2">
+      <label>NOMBRE DEL PACIENTE:</label>
+      <input type="text" formControlName="nombrePaciente" placeholder="Ej. Alejandro Sánchez López" [readonly]="esModoEdicion" class="input-hoja">
     </div>
 
     <div class="campo">
       <label>FECHA:</label>
-      <input type="date" formControlName="fecha">
-    </div>
-
-    <div class="campo c-2">
-      <label>NOMBRE DEL PACIENTE:</label>
-      <input type="text" formControlName="nombrePaciente" placeholder="Ej. Alejandro Sánchez López" [readonly]="esModoEdicion">
+      <input type="date" formControlName="fecha" class="input-hoja">
     </div>
 
     <div class="campo">
       <label>FECHA DE NACIMIENTO:</label>
-      <input type="date" formControlName="fechaNacimiento">
+      <input type="date" formControlName="fechaNacimiento" class="input-hoja">
     </div>
 
     <div class="campo">
       <label>HABITACIÓN:</label>
-      <input type="text" formControlName="habitacion" placeholder="Ej. 5">
+      <input type="text" formControlName="habitacion" placeholder="Ej. 5" class="input-hoja">
     </div>
 
     <div class="campo">
       <label>MÉDICO TRATANTE:</label>
-      <input type="text" formControlName="medicoTratante" placeholder="Ej. Jesús Bernal">
+      <input type="text" formControlName="medicoTratante" placeholder="Ej. Dr. Jesús Bernal" class="input-hoja">
     </div>
 
-    <div class="campo">
-      <label>PROCEDIMIENTO:</label>
-      <input type="text" formControlName="procedimiento" placeholder="Ej. Circuncisión">
+    <div class="campo c-2">
+      <label>PROCEDIMIENTO / DIAGNÓSTICO:</label>
+      <input type="text" formControlName="procedimiento" placeholder="Ej. Cirugía Laparoscópica / HOLEP" class="input-hoja">
     </div>
   </div>
 

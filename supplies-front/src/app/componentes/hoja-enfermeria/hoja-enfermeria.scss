@@ -1,3 +1,56 @@
+.barra-seleccion-paciente {
+  background: #1e3a8a;
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  .selector-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-grow: 1;
+
+    .label-icono {
+      font-size: 11px;
+      font-weight: 800;
+      color: #ffffff;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .select-paciente-moderno {
+      width: 100%;
+      background-color: #ffffff;
+      color: #1e293b;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      outline: none;
+      cursor: pointer;
+    }
+  }
+
+  .status-badge {
+    background-color: #3b82f6;
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+
+    &.edicion {
+      background-color: #d97706;
+      color: #ffffff;
+    }
+  }
+}
 // ==========================================
 // 1. ESTILOS BASE Y CONTENEDOR PRINCIPAL
 // ==========================================
@@ -281,12 +334,76 @@ tr.turno-rojo {
 }
 
 @media print {
+  /* Ajuste de márgenes de página */
+  @page {
+    margin: 8mm 10mm;
+    size: portrait;
+  }
+
   body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Oculta controles interactivos */
+  /* Compactar contenedor principal */
+  .hoja-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Reducir espacio del encabezado y datos del paciente */
+  .clinica-header {
+    margin-bottom: 10px !important;
+    padding-bottom: 4px !important;
+
+    .nombre-clinica { font-size: 12px !important; }
+    .titulo-form { font-size: 13px !important; margin-top: 2px !important; }
+  }
+
+  .datos-paciente-grid {
+    margin-bottom: 10px !important;
+    
+    .campo {
+      padding: 4px 6px !important;
+      label { font-size: 9px !important; margin-bottom: 2px !important; }
+      input { font-size: 11px !important; padding: 1px !important; }
+    }
+  }
+
+  /* Compactar celdas de la tabla para maximizar filas por página */
+  .tabla-suministros {
+    margin-top: 5px !important;
+
+    th, td {
+      padding: 2px 4px !important; /* Padding ultra reducido */
+      font-size: 10px !important;
+      height: 18px !important;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="date"] {
+      font-size: 10px !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+  }
+
+  /* Ajustes en sección de totales */
+  .seccion-totales {
+    margin-top: 10px !important;
+
+    .totales-box {
+      width: 220px !important;
+      .total-row { padding: 4px 8px !important; font-size: 11px !important; }
+      .total-final { font-size: 12px !important; }
+    }
+  }
+
+  /* Ocultar elementos interactivos */
   .no-print,
   .footer-actions,
   .btn-eliminar,
@@ -295,35 +412,14 @@ tr.turno-rojo {
     display: none !important;
   }
 
-  /* Muestra el texto plano de los insumos en el PDF */
   .only-print {
     display: inline-block !important;
+    font-size: 10px !important;
     font-weight: bold;
-    font-size: 12px;
   }
 
-  /* Preserva los colores de los turnos en la impresión */
-  tr.turno-azul {
-    color: #1a56db !important;
-    .texto-impresion-insumo { color: #1a56db !important; }
-  }
-
-  tr.turno-verde {
-    color: #0e9f6e !important;
-    .texto-impresion-insumo { color: #0e9f6e !important; }
-  }
-
-  tr.turno-rojo {
-    color: #e02424 !important;
-    .texto-impresion-insumo { color: #e02424 !important; }
-  }
-
-  /* Limpieza del contenedor para simular hoja física */
-  .hoja-container {
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    max-width: 100% !important;
-  }
+  /* Mantener colores de turnos */
+  tr.turno-azul { color: #1a56db !important; .texto-impresion-insumo { color: #1a56db !important; } }
+  tr.turno-verde { color: #0e9f6e !important; .texto-impresion-insumo { color: #0e9f6e !important; } }
+  tr.turno-rojo { color: #e02424 !important; .texto-impresion-insumo { color: #e02424 !important; } }
 }

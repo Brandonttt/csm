@@ -20,7 +20,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/consumos")
-@CrossOrigin(origins = "http://localhost:4200") // Permite la comunicación local con Angular
+@CrossOrigin(origins = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
+        RequestMethod.DELETE }) // Permite la comunicación local con Angular
 public class ConsumoController {
 
     @Autowired
@@ -93,23 +94,23 @@ public class ConsumoController {
     }
 
     // 3. PUT para actualizar la lista de insumos de un evento existente
-    @PutMapping("/evento/{eventoId}")
-    public ResponseEntity<Map<String, Object>> actualizarHojaConsumos(
-            @PathVariable Long eventoId,
-            @RequestBody List<DetalleConsumo> nuevosConsumos) {
-        try {
-            // Nota: Debes declarar este método en tu ConsumoService
-            consumoService.actualizarConsumosEvento(eventoId, nuevosConsumos);
+    // @PutMapping("/evento/{eventoId}")
+    // public ResponseEntity<Map<String, Object>> actualizarHojaConsumos(
+    // @PathVariable Long eventoId,
+    // @RequestBody List<DetalleConsumo> nuevosConsumos) {
+    // try {
+    // // Nota: Debes declarar este método en tu ConsumoService
+    // consumoService.actualizarConsumosEvento(eventoId, nuevosConsumos);
 
-            Map<String, Object> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Hoja de insumos actualizada con éxito");
-            respuesta.put("idEventoGenerated", eventoId);
+    // Map<String, Object> respuesta = new HashMap<>();
+    // respuesta.put("mensaje", "Hoja de insumos actualizada con éxito");
+    // respuesta.put("idEventoGenerated", eventoId);
 
-            return ResponseEntity.ok(respuesta);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
+    // return ResponseEntity.ok(respuesta);
+    // } catch (Exception e) {
+    // return ResponseEntity.badRequest().build();
+    // }
+    // }
 
     @PostMapping("/evento/nuevo")
     public ResponseEntity<Map<String, Object>> crearNuevoEventoConConsumos(@RequestBody Map<String, Object> datos) {
@@ -134,5 +135,16 @@ public class ConsumoController {
         // persistirlas o asignarlas aquí
         EventoHospitalario nuevoEvento = eventoHospitalarioRepository.save(evento);
         return new ResponseEntity<>(nuevoEvento, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/evento/{id}")
+    public ResponseEntity<?> actualizarEventoCompleto(@PathVariable Long id, @RequestBody Map<String, Object> datos) {
+        try {
+            consumoService.actualizarEventoCompleto(id, datos);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace(); // Imprime el error completo en la consola de Spring Boot
+            return ResponseEntity.status(500).body("Error en Backend: " + e.getMessage());
+        }
     }
 }

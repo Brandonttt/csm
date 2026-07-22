@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class SuministrosService {
 
   // Apuntamos al puerto 8082 que configuramos en el application.properties
-  private API_URL = 'http://localhost:8082/api';  
+  private API_URL = 'http://192.168.100.10:8082/api';  
   constructor(private http: HttpClient) { }
 
   // 1. Obtener el catálogo de medicamentos/materiales para el dropdown de enfermería
@@ -26,7 +26,7 @@ export class SuministrosService {
     return this.http.get<any>(`${this.API_URL}/cuentas/evento/${eventoId}`);
   }
   obtenerCuenta(eventoId: number): Observable<any> {
-  return this.http.get(`http://localhost:8082/api/consumos/evento/${eventoId}/cuenta`);
+  return this.http.get(`http://192.168.100.10:8082/api/consumos/evento/${eventoId}/cuenta`);
   }
  /**
    * Obtiene la lista de todos los pacientes con eventos hospitalarios activos.

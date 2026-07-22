@@ -7,6 +7,7 @@ public class CuentaResponseDTO {
     private Long eventoId;
     private String nombrePaciente;
     private String nombreMedico;
+    private String procedimiento; // Nuevo campo para el procedimiento
     private String horaSalidaQx;
     private String fechaEmision;
     private List<DetalleInsumoDTO> detalles;
@@ -21,11 +22,12 @@ public class CuentaResponseDTO {
 
     // Constructor con parámetros
     public CuentaResponseDTO(Long eventoId, String nombrePaciente, String nombreMedico,
-            String horaSalidaQx, String fechaEmision, List<DetalleInsumoDTO> detalles,
+            String procedimiento, String horaSalidaQx, String fechaEmision, List<DetalleInsumoDTO> detalles,
             BigDecimal subtotal, BigDecimal iva, BigDecimal total) {
         this.eventoId = eventoId;
         this.nombrePaciente = nombrePaciente;
         this.nombreMedico = nombreMedico;
+        this.procedimiento = procedimiento;
         this.horaSalidaQx = horaSalidaQx;
         this.fechaEmision = fechaEmision;
         this.detalles = detalles;
@@ -57,6 +59,14 @@ public class CuentaResponseDTO {
 
     public void setNombreMedico(String nombreMedico) {
         this.nombreMedico = nombreMedico;
+    }
+
+    public String getProcedimiento() {
+        return procedimiento;
+    }
+
+    public void setProcedimiento(String procedimiento) {
+        this.procedimiento = procedimiento;
     }
 
     public String getHoraSalidaQx() {
@@ -106,4 +116,5 @@ public class CuentaResponseDTO {
     public void setTotal(BigDecimal total) {
         this.total = total;
     }
+
 }
