@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # 1. BASE DE DATOS (MariaDB)
   db:
     image: mariadb:10.11
     container_name: santamaria_db
@@ -15,12 +16,43 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
 
+  # 2. GESTOR DE BASE DE DATOS (Adminer)
   adminer:
     image: adminer
     container_name: santamaria_adminer
     restart: always
     ports:
       - "8081:8080"
+    depends_on:
+      - db
+
+  # 3. BACKEND (Spring Boot)
+  backend:
+    build:
+      context: . # 👈 Ruta a la carpeta del proyecto Spring Boot
+      dockerfile: Dockerfile
+    container_name: santamaria_backend
+    restart: always
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/clinica_santamaria?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=santamaria_user
+      - SPRING_DATASOURCE_PASSWORD=user_secure_pass
+    depends_on:
+      - db
+
+  # 4. FRONTEND (Angular + Nginx)
+  frontend:
+    build:
+      context: ./supplies-front # 👈 Ruta a la carpeta de Angular
+      dockerfile: Dockerfile
+    container_name: santamaria_frontend
+    restart: always
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
 
 volumes:
   mariadb_data:
