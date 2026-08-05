@@ -2,6 +2,7 @@ package com.santamaria.suministros.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -20,9 +21,17 @@ public class DetalleConsumo {
     @JoinColumn(name = "evento_id", nullable = false)
     private EventoHospitalario evento;
 
+    // 🛠️ PERMITIR NULL para insumos registrados a mano
     @ManyToOne
-    @JoinColumn(name = "insumo_id", nullable = false)
+    @JoinColumn(name = "insumo_id", nullable = true)
     private Insumo insumo;
+
+    // 🛠️ NUEVAS COLUMNAS PARA CAPTURA LIBRE
+    @Column(name = "descripcion_manual")
+    private String descripcionManual;
+
+    @Column(name = "precio_unitario_aplicado", precision = 10, scale = 2)
+    private BigDecimal precioUnitarioAplicado;
 
     @Column(nullable = false)
     private Integer cantidad;
@@ -37,5 +46,5 @@ public class DetalleConsumo {
     private Boolean ingresoAlSistema = false;
 
     @Column(name = "turno")
-    private String turno; // 👈 Guardará "azul
+    private String turno;
 }

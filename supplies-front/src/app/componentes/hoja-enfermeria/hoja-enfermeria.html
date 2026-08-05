@@ -16,6 +16,7 @@
       {{ esModoEdicion ? '✏️ Modo: Editando Registro Existente' : '🆕 Modo: Nuevo Registro' }}
     </div>
   </div>
+
   <!-- Encabezado Clínico -->
   <div class="clinica-header">
     <div class="logo-area">
@@ -25,11 +26,16 @@
   </div>
 
   <!-- Cabecera de Datos del Paciente -->
-<div class="datos-paciente-grid">
-    <div class="campo c-2">
-      <label>NOMBRE DEL PACIENTE:</label>
-      <input type="text" formControlName="nombrePaciente" placeholder="Ej. Alejandro Sánchez López" [readonly]="esModoEdicion" class="input-hoja">
-    </div>
+  <div class="datos-paciente-grid">
+ <div class="campo c-2 campo-paciente-destacado">
+    <label class="label-paciente">NOMBRE DEL PACIENTE:</label>
+    <input type="text" 
+           formControlName="nombrePaciente" 
+           placeholder="Ej. Alejandro Sánchez López" 
+           [readonly]="esModoEdicion" 
+           class="input-hoja input-paciente-resaltado"
+           [class.input-edicion-activa]="esModoEdicion">
+  </div>
 
     <div class="campo">
       <label>FECHA:</label>
@@ -76,26 +82,55 @@
           [ngClass]="'turno-' + fila.get('turno')?.value">
         
         <td>
-          <input type="number" formControlName="cantidad" class="input-center">
+          <input type="number" formControlName="cantidad" (input)="calcularTotales()" class="input-center">
         </td>
 
-        <td>
-          <!-- Vista interactiva (Pantalla) -->
-          <select formControlName="insumoId" 
+        <!-- COLUMNA ARTÍCULO MODIFICADA -->
+      <td class="celda-articulo">
+        <!-- Vista Interactiva (Pantalla) -->
+        <div class="no-print contenedor-articulo-flex">
+          
+          <!-- MODO 1: Selección de Catálogo -->
+          <select *ngIf="!fila.get('esManual')?.value" 
+                  formControlName="insumoId" 
                   (change)="onInsumoChange(i)" 
-                  class="form-control-select no-print"
+                  class="control-insumo select-catalogo"
                   [ngClass]="'select-' + fila.get('turno')?.value">
             <option [ngValue]="null">-- Seleccionar Artículo --</option>
             <option *ngFor="let insumo of catalogoInsumos" [ngValue]="insumo.id || insumo.idInsumo">
-              {{ insumo.descripcion || insumo.nombre }} (${{ (insumo.precioUnitario || insumo.precio_unitario || insumo.precio || 0) | number:'1.2-2' }})
+              {{ insumo.descripcion || insumo.nombre }} 
+              <!-- (${{ (insumo.precioUnitario || insumo.precio_unitario || insumo.precio || 0) | number:'1.2-2' }}) --> 
             </option>
           </select>
 
-          <!-- Vista de texto plano (PDF / Impresión) -->
-          <span class="only-print texto-impresion-insumo" [ngClass]="'texto-' + fila.get('turno')?.value">
-            {{ obtenerNombreInsumo(fila.get('insumoId')?.value) }}
-          </span>
-        </td>
+          <!-- MODO 2: Entrada Libre / Manual -->
+          <div *ngIf="fila.get('esManual')?.value" class="grupo-manual-inputs">
+            <input type="text" 
+                  formControlName="nombreManual" 
+                  placeholder="Nombre del insumo / medicamento..." 
+                  class="control-insumo input-nombre-libre">
+            <input type="number" 
+                  formControlName="precioManual" 
+                  (input)="calcularTotales()" 
+                  placeholder="$ Precio" 
+                  class="control-insumo input-precio-libre">
+          </div>
+
+          <!-- Botón Toggle Integrado en Línea -->
+          <button type="button" 
+                  class="btn-toggle-modo" 
+                  [class.activo]="fila.get('esManual')?.value"
+                  (click)="toggleModoManual(i)" 
+                  [title]="fila.get('esManual')?.value ? 'Volver a lista de catálogo' : 'Escribir insumo a mano'">
+            <span>{{ fila.get('esManual')?.value ? '📋 Catálogo' : '✏️ Libre' }}</span>
+          </button>
+        </div>
+
+        <!-- Vista de Impresión / PDF -->
+        <span class="only-print texto-impresion-insumo" [ngClass]="'texto-' + fila.get('turno')?.value">
+          {{ fila.get('esManual')?.value ? fila.get('nombreManual')?.value : obtenerNombreInsumo(fila.get('insumoId')?.value) }}
+        </span>
+      </td>
 
         <td>
           <input type="number" formControlName="cantidadRecibida" class="input-center">

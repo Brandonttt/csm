@@ -54,6 +54,19 @@ public class ConsumoService {
         }
     }
 
+    private BigDecimal parsearBigDecimalSeguro(Object obj, BigDecimal valorPorDefecto) {
+        if (obj == null)
+            return valorPorDefecto;
+        String str = obj.toString().trim();
+        if (str.isEmpty() || str.equalsIgnoreCase("null"))
+            return valorPorDefecto;
+        try {
+            return new BigDecimal(str);
+        } catch (Exception e) {
+            return valorPorDefecto;
+        }
+    }
+
     private LocalDate parsearFechaSegura(Object fechaObj) {
         if (fechaObj == null)
             return null;
@@ -83,20 +96,37 @@ public class ConsumoService {
                 fechaFormateada = c.getFechaAplicacion().format(dateFormatter);
             }
 
-            String descripcion = "";
-            if (c.getInsumo() != null && c.getInsumo().getDescripcion() != null) {
-                descripcion = c.getInsumo().getDescripcion();
-            }
+            // 🛠️ Si es de catálogo toma la descripción del catálogo, si es libre toma la
+            // manual
+            String descripcion = (c.getInsumo() != null && c.getInsumo().getDescripcion() != null)
+                    ? c.getInsumo().getDescripcion()
+                    : (c.getDescripcionManual() != null ? c.getDescripcionManual() : "SIN DESCRIPCIÓN");
 
             Integer cantidad = c.getCantidad() != null ? c.getCantidad() : 0;
+
+            // 🛠️ Si es de catálogo toma el precio del catálogo, si es libre toma
+            // precioUnitarioAplicado
             BigDecimal precioUnit = (c.getInsumo() != null && c.getInsumo().getPrecioUnitario() != null)
                     ? c.getInsumo().getPrecioUnitario()
-                    : BigDecimal.ZERO;
+                    : (c.getPrecioUnitarioAplicado() != null ? c.getPrecioUnitarioAplicado() : BigDecimal.ZERO);
 
             BigDecimal importe = precioUnit.multiply(BigDecimal.valueOf(cantidad));
             String turno = (c.getTurno() != null && !c.getTurno().isBlank()) ? c.getTurno() : "azul";
 
-            return new DetalleInsumoDTO(fechaFormateada, descripcion, cantidad, precioUnit, importe, turno);
+            Long insumoId = c.getInsumo() != null ? c.getInsumo().getId() : null;
+
+            // 🛠️ CORRECCIÓN AQUÍ: Llamada al constructor actualizado con 10 parámetros
+            return new DetalleInsumoDTO(
+                    insumoId,
+                    c.getDescripcionManual(),
+                    fechaFormateada,
+                    descripcion,
+                    cantidad,
+                    c.getCantidadRecibida(),
+                    c.getIngresoAlSistema(),
+                    precioUnit,
+                    importe,
+                    turno);
         }).collect(Collectors.toList());
 
         BigDecimal subtotal = detallesDTO.stream()
@@ -161,11 +191,17 @@ public class ConsumoService {
         List<Map<String, Object>> detalles = consumos.stream().map(c -> {
             Map<String, Object> detMap = new HashMap<>();
             detMap.put("insumoId", c.getInsumo() != null ? c.getInsumo().getId() : null);
+            detMap.put("descripcionManual", c.getDescripcionManual());
             detMap.put("cantidad", c.getCantidad());
             detMap.put("cantidadRecibida", c.getCantidadRecibida());
             detMap.put("ingresoAlSistema", c.getIngresoAlSistema());
             detMap.put("fecha", c.getFechaAplicacion() != null ? c.getFechaAplicacion().toString() : "");
-            detMap.put("precioUnitario", c.getInsumo() != null ? c.getInsumo().getPrecioUnitario() : BigDecimal.ZERO);
+
+            // 🛠️ Retornar precio correcto para recargar Angular
+            BigDecimal precio = c.getInsumo() != null ? c.getInsumo().getPrecioUnitario()
+                    : c.getPrecioUnitarioAplicado();
+            detMap.put("precioUnitario", precio != null ? precio : BigDecimal.ZERO);
+
             detMap.put("turno", c.getTurno() != null ? c.getTurno() : "azul");
             return detMap;
         }).collect(Collectors.toList());
@@ -183,7 +219,7 @@ public class ConsumoService {
         LocalDate fechaEv = parsearFechaSegura(datos.get("fecha"));
         nuevoEvento.setFecha(fechaEv != null ? fechaEv : LocalDate.now());
 
-        // Gestionar Paciente
+        // Paciente
         Map<String, Object> pacienteMap = (Map<String, Object>) datos.get("paciente");
         if (pacienteMap != null) {
             Paciente paciente = new Paciente();
@@ -192,7 +228,7 @@ public class ConsumoService {
             nuevoEvento.setPaciente(paciente);
         }
 
-        // Gestionar Médico
+        // Médico
         Map<String, Object> medicoMap = (Map<String, Object>) datos.get("medico");
         if (medicoMap != null) {
             Medico medico = new Medico();
@@ -205,32 +241,7 @@ public class ConsumoService {
         // Guardar consumos
         List<Map<String, Object>> consumosRaw = (List<Map<String, Object>>) datos.get("consumos");
         if (consumosRaw != null) {
-            for (Map<String, Object> c : consumosRaw) {
-                Integer insumoIdParsed = parsearEnteroSeguro(c.get("insumoId"), 0);
-                if (insumoIdParsed <= 0)
-                    continue;
-
-                DetalleConsumo consumo = new DetalleConsumo();
-                consumo.setEvento(nuevoEvento);
-                consumo.setInsumo(insumoRepository.findById(Long.valueOf(insumoIdParsed)).orElse(null));
-                consumo.setCantidad(parsearEnteroSeguro(c.get("cantidad"), 1));
-
-                if (c.get("cantidadRecibida") != null) {
-                    consumo.setCantidadRecibida(parsearEnteroSeguro(c.get("cantidadRecibida"), 0));
-                }
-
-                if (c.get("ingresoAlSistema") != null) {
-                    consumo.setIngresoAlSistema(Boolean.parseBoolean(c.get("ingresoAlSistema").toString()));
-                }
-
-                String turno = c.get("turno") != null ? c.get("turno").toString() : "azul";
-                consumo.setTurno(!turno.isBlank() ? turno : "azul");
-
-                LocalDate fechaApp = parsearFechaSegura(c.get("fechaAplicacion"));
-                consumo.setFechaAplicacion(fechaApp != null ? fechaApp : LocalDate.now());
-
-                detalleConsumoRepository.save(consumo);
-            }
+            guardarListaConsumos(nuevoEvento, consumosRaw);
         }
 
         return nuevoEvento.getId();
@@ -253,7 +264,7 @@ public class ConsumoService {
             evento.setFecha(fechaEv);
         }
 
-        // Actualizar Paciente
+        // Paciente
         Map<String, Object> pacienteMap = (Map<String, Object>) datos.get("paciente");
         if (pacienteMap != null && evento.getPaciente() != null) {
             if (pacienteMap.get("nombre") != null) {
@@ -265,7 +276,7 @@ public class ConsumoService {
             }
         }
 
-        // Actualizar Médico
+        // Médico
         Map<String, Object> medicoMap = (Map<String, Object>) datos.get("medico");
         if (medicoMap != null && evento.getMedico() != null && medicoMap.get("nombre") != null) {
             evento.getMedico().setNombre(medicoMap.get("nombre").toString());
@@ -281,32 +292,55 @@ public class ConsumoService {
 
         List<Map<String, Object>> consumosRaw = (List<Map<String, Object>>) datos.get("consumos");
         if (consumosRaw != null) {
-            for (Map<String, Object> c : consumosRaw) {
-                Integer insumoIdParsed = parsearEnteroSeguro(c.get("insumoId"), 0);
-                if (insumoIdParsed <= 0)
-                    continue;
+            guardarListaConsumos(evento, consumosRaw);
+        }
+    }
 
-                DetalleConsumo consumo = new DetalleConsumo();
-                consumo.setEvento(evento);
-                consumo.setInsumo(insumoRepository.findById(Long.valueOf(insumoIdParsed)).orElse(null));
-                consumo.setCantidad(parsearEnteroSeguro(c.get("cantidad"), 1));
+    // 🛠️ MÉTODO AUXILIAR QUE ADMITE TANTO CATÁLOGO COMO CAPTURA MANUAL
+    private void guardarListaConsumos(EventoHospitalario evento, List<Map<String, Object>> consumosRaw) {
+        for (Map<String, Object> c : consumosRaw) {
+            Integer insumoIdParsed = parsearEnteroSeguro(c.get("insumoId"), 0);
+            String descManual = c.get("descripcionManual") != null ? c.get("descripcionManual").toString().trim() : "";
 
-                if (c.get("cantidadRecibida") != null) {
-                    consumo.setCantidadRecibida(parsearEnteroSeguro(c.get("cantidadRecibida"), 0));
-                }
-
-                if (c.get("ingresoAlSistema") != null) {
-                    consumo.setIngresoAlSistema(Boolean.parseBoolean(c.get("ingresoAlSistema").toString()));
-                }
-
-                String turno = c.get("turno") != null ? c.get("turno").toString() : "azul";
-                consumo.setTurno(!turno.isBlank() ? turno : "azul");
-
-                LocalDate fechaApp = parsearFechaSegura(c.get("fechaAplicacion"));
-                consumo.setFechaAplicacion(fechaApp != null ? fechaApp : LocalDate.now());
-
-                detalleConsumoRepository.save(consumo);
+            // Si no hay ID de catálogo ni descripción manual, omitir
+            if (insumoIdParsed <= 0 && descManual.isEmpty()) {
+                continue;
             }
+
+            DetalleConsumo consumo = new DetalleConsumo();
+            consumo.setEvento(evento);
+
+            if (insumoIdParsed > 0) {
+                // Caso Catálogo
+                consumo.setInsumo(insumoRepository.findById(Long.valueOf(insumoIdParsed)).orElse(null));
+                consumo.setDescripcionManual(null);
+                consumo.setPrecioUnitarioAplicado(
+                        consumo.getInsumo() != null ? consumo.getInsumo().getPrecioUnitario() : BigDecimal.ZERO);
+            } else {
+                // Caso Captura Libre / Manual
+                consumo.setInsumo(null);
+                consumo.setDescripcionManual(descManual);
+                BigDecimal precioManual = parsearBigDecimalSeguro(c.get("precioUnitario"), BigDecimal.ZERO);
+                consumo.setPrecioUnitarioAplicado(precioManual);
+            }
+
+            consumo.setCantidad(parsearEnteroSeguro(c.get("cantidad"), 1));
+
+            if (c.get("cantidadRecibida") != null) {
+                consumo.setCantidadRecibida(parsearEnteroSeguro(c.get("cantidadRecibida"), 0));
+            }
+
+            if (c.get("ingresoAlSistema") != null) {
+                consumo.setIngresoAlSistema(Boolean.parseBoolean(c.get("ingresoAlSistema").toString()));
+            }
+
+            String turno = c.get("turno") != null ? c.get("turno").toString() : "azul";
+            consumo.setTurno(!turno.isBlank() ? turno : "azul");
+
+            LocalDate fechaApp = parsearFechaSegura(c.get("fechaAplicacion"));
+            consumo.setFechaAplicacion(fechaApp != null ? fechaApp : LocalDate.now());
+
+            detalleConsumoRepository.save(consumo);
         }
     }
 }
