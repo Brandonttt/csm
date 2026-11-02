@@ -9,32 +9,41 @@
     <button class="btn-pdf" (click)="imprimirCuenta()">🖨️ Imprimir / Guardar PDF</button>
   </div>
 
-  <!-- Encabezado de la Ciudad y Fecha -->
-  <div class="fecha-encabezado">
-    Tlalnepantla de Baz, Estado de México a {{ cuentaData?.fechaEmision }}
+  <!-- Encabezado con Logo a la izquierda y Fecha/Ubicación a la derecha -->
+  <div class="encabezado-institucional">
+    <div class="logo-superior-izq">
+      <img src="logo-2.png" alt="Clínica Santa María" class="logo-img">
+    </div>
+    <div class="fecha-encabezado">
+      Tlalnepantla de Baz, Estado de México a {{ cuentaData?.fechaEmision }}
+    </div>
   </div>
 
-  <!-- Bloque Paciente / Doctor y Horario QX -->
+  <!-- Bloque Paciente / Doctor y Procedimiento -->
   <div class="info-paciente-grid">
     <div class="datos-cliente">
       <!-- MODO EDICIÓN vs MODO LECTURA ESTRUCTURADO -->
       <h2 *ngIf="!modoEdicion" class="nombre-paciente">{{ cuentaData?.nombrePaciente }}</h2>
       <input *ngIf="modoEdicion" type="text" [(ngModel)]="cuentaData.nombrePaciente" class="input-inline-header paciente">
 
-      <p *ngIf="!modoEdicion" class="nombre-doctor"><strong>DR. {{ cuentaData?.nombreMedico | uppercase }}</strong></p>
+      <p *ngIf="!modoEdicion" class="nombre-doctor">
+        <strong>
+          {{ (cuentaData?.nombreMedico || cuentaData?.medicoTratante || '').toUpperCase().startsWith('DR.') ? (cuentaData?.nombreMedico || cuentaData?.medicoTratante | uppercase) : 'DR. ' + (cuentaData?.nombreMedico || cuentaData?.medicoTratante | uppercase) }}
+        </strong>
+      </p>
       <div *ngIf="modoEdicion" class="medico-edit-wrapper">
         <strong>DR. </strong>
-        <input type="text" [(ngModel)]="cuentaData.nombreMedico" class="input-inline-header medico">
+        <input *ngIf="cuentaData.nombreMedico !== undefined" type="text" [(ngModel)]="cuentaData.nombreMedico" class="input-inline-header medico">
+        <input *ngIf="cuentaData.nombreMedico === undefined" type="text" [(ngModel)]="cuentaData.medicoTratante" class="input-inline-header medico">
       </div>
     </div>
 
     <div class="datos-qx">
-      <div class="salida-qx">SALIDA DE QX {{ cuentaData?.horaSalidaQx || '9:11 PM' }}</div>
       <div class="estancia">{{ cuentaData?.procedimiento || 'ESTANCIA HOSPITALARIA' }}</div>
     </div>
   </div>
 
-  <!-- Tabla de Desglose con formato exacto -->
+  <!-- Tabla de Desglose (SIN TFOOT) -->
   <table class="tabla-desglose">
     <thead>
       <tr class="banner-titulo">
@@ -58,8 +67,8 @@
 
         <!-- Artículo / Concepto -->
         <td class="col-left">
-          <span *ngIf="!modoEdicion">{{ item.description }}</span>
-          <input *ngIf="modoEdicion" type="text" [(ngModel)]="item.description" class="input-table-inline left">
+          <span *ngIf="!modoEdicion">{{ item.descripcion || item.descripcionManual || item.description }}</span>
+          <input *ngIf="modoEdicion" type="text" [(ngModel)]="item.descripcion" class="input-table-inline left">
         </td>
 
         <!-- Cantidad -->
@@ -83,25 +92,24 @@
         </td>
       </tr>
     </tbody>
+  </table>
 
-    <!-- Bloque de Totales (Alineado a la derecha como la imagen) -->
-    <tfoot>
+  <!-- BLOQUE DE TOTALES INDEPENDIENTE (Aparece solo en la última hoja al final de la tabla) -->
+  <div class="bloque-totales-final">
+    <table class="tabla-resumen-totales-cuenta">
       <tr class="row-subtotal">
-        <td colspan="3" class="sin-borde"></td>
         <td class="total-label">SUBTOTAL</td>
-        <td class="total-value">$ {{ cuentaData?.subtotal | number:'1.2-2' }}</td>
+        <td class="total-value">$ {{ (cuentaData?.subtotal || 0) | number:'1.2-2' }}</td>
       </tr>
       <tr class="row-iva">
-        <td colspan="3" class="sin-borde"></td>
         <td class="total-label">IVA (16%)</td>
-        <td class="total-value">$ {{ cuentaData?.iva | number:'1.2-2' }}</td>
+        <td class="total-value">$ {{ (cuentaData?.iva || 0) | number:'1.2-2' }}</td>
       </tr>
       <tr class="row-total-final">
-        <td colspan="3" class="sin-borde"></td>
         <td class="total-label-final">TOTAL</td>
-        <td class="total-value-final">$ {{ cuentaData?.total | number:'1.2-2' }}</td>
+        <td class="total-value-final">$ {{ (cuentaData?.total || 0) | number:'1.2-2' }}</td>
       </tr>
-    </tfoot>
-  </table>
+    </table>
+  </div>
 
 </div>

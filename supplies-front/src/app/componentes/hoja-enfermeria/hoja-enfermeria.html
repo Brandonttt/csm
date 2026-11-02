@@ -27,15 +27,15 @@
 
   <!-- Cabecera de Datos del Paciente -->
   <div class="datos-paciente-grid">
- <div class="campo c-2 campo-paciente-destacado">
-    <label class="label-paciente">NOMBRE DEL PACIENTE:</label>
-    <input type="text" 
-           formControlName="nombrePaciente" 
-           placeholder="Ej. Alejandro Sánchez López" 
-           [readonly]="esModoEdicion" 
-           class="input-hoja input-paciente-resaltado"
-           [class.input-edicion-activa]="esModoEdicion">
-  </div>
+    <div class="campo c-2 campo-paciente-destacado">
+      <label class="label-paciente">NOMBRE DEL PACIENTE:</label>
+      <input type="text" 
+             formControlName="nombrePaciente" 
+             placeholder="Ej. Alejandro Sánchez López" 
+             [readonly]="esModoEdicion" 
+             class="input-hoja input-paciente-resaltado"
+             [class.input-edicion-activa]="esModoEdicion">
+    </div>
 
     <div class="campo">
       <label>FECHA:</label>
@@ -76,85 +76,107 @@
         <th style="width: 10%;" class="no-print">ACCIONES</th>
       </tr>
     </thead>
-    <tbody formArrayName="consumos">
-      <tr *ngFor="let fila of consumos.controls; let i=index" 
-          [formGroupName]="i" 
-          [ngClass]="'turno-' + fila.get('turno')?.value">
+    <tbody formArrayName="consumos" cdkDropList (cdkDropListDropped)="reordenarFilas($event)">
+  <tr *ngFor="let fila of consumos.controls; let i=index" 
+      [formGroupName]="i" 
+      cdkDrag
+      [ngClass]="'turno-' + fila.get('turno')?.value">
+    
+    <td>
+      <input type="number" formControlName="cantidad" (input)="calcularTotales()" class="input-center">
+    </td>
+
+    <!-- COLUMNA ARTÍCULO -->
+    <td class="celda-articulo">
+      <div class="no-print contenedor-articulo-flex">
         
-        <td>
-          <input type="number" formControlName="cantidad" (input)="calcularTotales()" class="input-center">
-        </td>
+        <!-- MODO 1: Selección de Catálogo -->
+        <select *ngIf="!fila.get('esManual')?.value" 
+                formControlName="insumoId" 
+                (change)="onInsumoChange(i, $event)" 
+                class="control-insumo select-catalogo"
+                [ngClass]="'select-' + fila.get('turno')?.value">
+          <option [value]="null">-- Seleccionar Artículo --</option>
+          <option *ngFor="let insumo of catalogoInsumos" [value]="insumo.id || insumo.idInsumo">
+            {{ insumo.descripcion || insumo.nombre }} 
+          </option>
+        </select>
 
-        <!-- COLUMNA ARTÍCULO MODIFICADA -->
-      <td class="celda-articulo">
-        <!-- Vista Interactiva (Pantalla) -->
-        <div class="no-print contenedor-articulo-flex">
-          
-          <!-- MODO 1: Selección de Catálogo -->
-          <select *ngIf="!fila.get('esManual')?.value" 
-                  formControlName="insumoId" 
-                  (change)="onInsumoChange(i)" 
-                  class="control-insumo select-catalogo"
-                  [ngClass]="'select-' + fila.get('turno')?.value">
-            <option [ngValue]="null">-- Seleccionar Artículo --</option>
-            <option *ngFor="let insumo of catalogoInsumos" [ngValue]="insumo.id || insumo.idInsumo">
-              {{ insumo.descripcion || insumo.nombre }} 
-              <!-- (${{ (insumo.precioUnitario || insumo.precio_unitario || insumo.precio || 0) | number:'1.2-2' }}) --> 
-            </option>
-          </select>
-
-          <!-- MODO 2: Entrada Libre / Manual -->
-          <div *ngIf="fila.get('esManual')?.value" class="grupo-manual-inputs">
-            <input type="text" 
-                  formControlName="nombreManual" 
-                  placeholder="Nombre del insumo / medicamento..." 
-                  class="control-insumo input-nombre-libre">
-            <input type="number" 
-                  formControlName="precioManual" 
-                  (input)="calcularTotales()" 
-                  placeholder="$ Precio" 
-                  class="control-insumo input-precio-libre">
-          </div>
-
-          <!-- Botón Toggle Integrado en Línea -->
-          <button type="button" 
-                  class="btn-toggle-modo" 
-                  [class.activo]="fila.get('esManual')?.value"
-                  (click)="toggleModoManual(i)" 
-                  [title]="fila.get('esManual')?.value ? 'Volver a lista de catálogo' : 'Escribir insumo a mano'">
-            <span>{{ fila.get('esManual')?.value ? '📋 Catálogo' : '✏️ Libre' }}</span>
-          </button>
+        <!-- MODO 2: Entrada Libre / Manual -->
+        <div *ngIf="fila.get('esManual')?.value" class="grupo-manual-inputs">
+          <input type="text" 
+                 formControlName="nombreManual" 
+                 placeholder="Nombre del insumo / medicamento..." 
+                 class="control-insumo input-nombre-libre">
+          <input type="number" 
+                 formControlName="precioManual" 
+                 (input)="calcularTotales()" 
+                 placeholder="$ Precio" 
+                 class="control-insumo input-precio-libre">
         </div>
 
-        <!-- Vista de Impresión / PDF -->
-        <span class="only-print texto-impresion-insumo" [ngClass]="'texto-' + fila.get('turno')?.value">
-          {{ fila.get('esManual')?.value ? fila.get('nombreManual')?.value : obtenerNombreInsumo(fila.get('insumoId')?.value) }}
-        </span>
-      </td>
+        <button type="button" 
+                class="btn-toggle-modo" 
+                [class.activo]="fila.get('esManual')?.value"
+                (click)="toggleModoManual(i)" 
+                [title]="fila.get('esManual')?.value ? 'Volver a lista de catálogo' : 'Escribir insumo a mano'">
+          <span>{{ fila.get('esManual')?.value ? '📋 Catálogo' : '✏️ Libre' }}</span>
+        </button>
+      </div>
 
-        <td>
-          <input type="number" formControlName="cantidadRecibida" class="input-center">
-        </td>
+      <span class="only-print texto-impresion-insumo" [ngClass]="'texto-' + fila.get('turno')?.value">
+        {{ fila.get('esManual')?.value ? fila.get('nombreManual')?.value : obtenerNombreInsumo(fila.get('insumoId')?.value) }}
+      </span>
+    </td>
 
-        <td>
-          <div class="checkbox-wrapper">
-            <input type="checkbox" formControlName="ingresoAlSistema">
-          </div>
-        </td>
+    <td>
+      <input type="number" formControlName="cantidadRecibida" class="input-center">
+    </td>
 
-        <td>
-          <input type="date" formControlName="fechaAplicacion">
-        </td>
+    <td>
+      <div class="checkbox-wrapper">
+        <input type="checkbox" formControlName="ingresoAlSistema">
+      </div>
+    </td>
 
-        <td class="col-costeo">
-          $ {{ (fila.get('costeo')?.value || 0) | number:'1.2-2' }}
-        </td>
+    <td>
+      <input type="date" formControlName="fechaAplicacion">
+    </td>
 
-        <td class="no-print">
-          <button type="button" class="btn-eliminar" (click)="eliminarFila(i)">✕</button>
-        </td>
-      </tr>
-    </tbody>
+    <td class="col-costeo">
+      $ {{ (fila.get('costeo')?.value || 0) | number:'1.2-2' }}
+    </td>
+
+    <!-- COLUMNA ACCIONES CON AGARRE Y BOTONES -->
+    <td class="no-print celda-acciones">
+      <div class="acciones-fila-flex">
+        <!-- Manija de arrastre -->
+        <span class="drag-handle" cdkDragHandle title="Arrastrar para mover fila">⠿</span>
+
+        <button type="button" 
+                class="btn-orden" 
+                [disabled]="i === 0" 
+                (click)="moverFilaArriba(i)" 
+                title="Mover arriba">
+          ▲
+        </button>
+        <button type="button" 
+                class="btn-orden" 
+                [disabled]="i === consumos.length - 1" 
+                (click)="moverFilaAbajo(i)" 
+                title="Mover abajo">
+          ▼
+        </button>
+        <button type="button" 
+                class="btn-eliminar-fila" 
+                (click)="eliminarFila(i)" 
+                title="Eliminar insumo">
+          ✕
+        </button>
+      </div>
+    </td>
+  </tr>
+</tbody>
   </table>
 
   <!-- Botones Añadir Fila por Turno -->
@@ -170,28 +192,25 @@
     </button>
   </div>
 
-  <!-- Sección de Cuentas Automatizada (Desglose tipo Excel) -->
+  <!-- Sección de Cuentas Automatizada -->
   <div class="seccion-totales">
     <div class="totales-box">
-      <div class="total-row"><span>SUBTOTAL:</span> <span>$ {{ subtotal | number:'1.2-2' }}</span></div>
-      <div class="total-row"><span>IVA (16%):</span> <span>$ {{ iva | number:'1.2-2' }}</span></div>
-      <div class="total-row total-final"><span>TOTAL:</span> <span>$ {{ total | number:'1.2-2' }}</span></div>
+      <div class="total-row"><span>SUBTOTAL:</span> <span>$ {{ subtotalCalculado | number:'1.2-2' }}</span></div>
+      <div class="total-row"><span>IVA (16%):</span> <span>$ {{ ivaCalculado | number:'1.2-2' }}</span></div>
+      <div class="total-row total-final"><span>TOTAL:</span> <span>$ {{ totalCalculado | number:'1.2-2' }}</span></div>
     </div>
   </div>
 
   <!-- Acciones del Footer Separadas -->
   <div class="footer-actions no-print">
-    <!-- Botón de Persistencia Cambiante -->
     <button type="button" class="btn-guardar" (click)="guardarOActualizarHoja()">
       {{ esModoEdicion ? 'Actualizar Hoja de Enfermería' : 'Guardar Hoja de Enfermería' }}
     </button>
 
-    <!-- Botón de Impresión -->
     <button type="button" class="btn-imprimir-hoja" (click)="imprimirHoja()">
       🖨️ Imprimir / Guardar PDF
     </button>
 
-    <!-- Botón Exclusivo para Procesar Estado de Cuenta -->
     <button type="button" class="btn-procesar" [disabled]="!idEventoActual" (click)="procesarCuenta()">
       Procesar Estado de Cuenta →
     </button>

@@ -1,3 +1,6 @@
+// ==========================================
+// 1. BARRA DE CONTROL DE SISTEMA
+// ==========================================
 .barra-seleccion-paciente {
   background: #1e3a8a;
   border-radius: 6px;
@@ -44,15 +47,18 @@
     font-size: 11px;
     font-weight: 700;
     white-space: nowrap;
+    letter-spacing: 0.5px;
 
     &.edicion {
-      background-color: #d97706;
-      color: #ffffff;
+      background-color: #d97706 !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
   }
 }
+
 // ==========================================
-// 1. ESTILOS BASE Y CONTENEDOR PRINCIPAL
+// 2. ESTILOS BASE Y CONTENEDOR PRINCIPAL
 // ==========================================
 .hoja-container {
   max-width: 900px;
@@ -87,7 +93,7 @@
 }
 
 // ==========================================
-// 2. ENCABEZADO Y DATOS DEL PACIENTE
+// 3. ENCABEZADO Y DATOS DEL PACIENTE
 // ==========================================
 .clinica-header {
   text-align: center;
@@ -134,8 +140,28 @@
   }
 }
 
+.campo-paciente-destacado {
+  .label-paciente {
+    color: #1e3a8a !important;
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+  }
+
+  .input-paciente-resaltado {
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    text-transform: uppercase;
+    
+    &.input-edicion-activa {
+      background-color: #eff6ff !important;
+      border-bottom: 2px solid #2563eb !important;
+    }
+  }
+}
+
 // ==========================================
-// 3. TABLA DE SUMINISTROS E INSUMOS
+// 4. TABLA DE SUMINISTROS E INSUMOS
 // ==========================================
 .tabla-suministros {
   width: 100%;
@@ -175,255 +201,6 @@
   }
 }
 
-// ==========================================
-// 4. COLORES POR TURNO (MATUTINO, VESPERTINO, NOCTURNO)
-// ==========================================
-tr.turno-azul {
-  select,
-  input,
-  span {
-    color: #1a56db !important;
-    font-weight: bold !important;
-  }
-}
-
-tr.turno-verde {
-  select,
-  input,
-  span {
-    color: #0e9f6e !important;
-    font-weight: bold !important;
-  }
-}
-
-tr.turno-rojo {
-  select,
-  input,
-  span {
-    color: #e02424 !important;
-    font-weight: bold !important;
-  }
-}
-
-// ==========================================
-// 5. ACCIONES Y BOTONES
-// ==========================================
-.acciones-turnos {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-
-  .btn-turno {
-    padding: 8px 16px;
-    font-weight: bold;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: transform 0.1s ease;
-
-    &:active {
-      transform: scale(0.97);
-    }
-
-    &.azul {
-      background-color: #2b6cb0;
-      &:hover { background-color: #2c5282; }
-    }
-
-    &.verde {
-      background-color: #2f855a;
-      &:hover { background-color: #22543d; }
-    }
-
-    &.rojo {
-      background-color: #c53030;
-      &:hover { background-color: #9b2c2c; }
-    }
-  }
-}
-
-.btn-eliminar {
-  background: none;
-  border: none;
-  color: #dc3545;
-  cursor: pointer;
-  font-size: 14px;
-  display: block;
-  margin: 0 auto;
-}
-
-// ==========================================
-// 6. DESGLOSE DE TOTALES
-// ==========================================
-.seccion-totales {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 25px;
-
-  .totales-box {
-    width: 280px;
-    border: 1px solid #000;
-    background-color: #fff;
-
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 12px;
-      font-size: 13px;
-      border-bottom: 0.5px solid #ccc;
-    }
-
-    .total-final {
-      background-color: #ffffcc;
-      font-weight: bold;
-      font-size: 15px;
-      border-bottom: none;
-    }
-  }
-}
-
-// ==========================================
-// 7. FOOTER Y BOTONES PRINCIPALES
-// ==========================================
-.footer-actions {
-  margin-top: 30px;
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-
-  button {
-    padding: 12px 24px;
-    font-size: 14px;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-
-  .btn-guardar {
-    background-color: #007c0079;
-    color: white;
-    font-size: 22px;
-    &:hover { background-color: #132963; }
-  }
-
-  .btn-imprimir-hoja {
-    background-color: #2c7a7b;
-    color: white;
-    &:hover { background-color: #234e52; }
-  }
-
-  .btn-procesar {
-    background-color: #4a5568;
-    color: white;
-    &:hover { background-color: #2d3748; }
-    &:disabled {
-      background-color: #cbd5e0;
-      cursor: not-allowed;
-    }
-  }
-}
-
-// ==========================================
-// 8. VISIBILIDAD E IMPRESIÓN (PDF)
-// ==========================================
-.only-print {
-  display: none !important;
-}
-
-@media print {
-  /* Ajuste de márgenes de página */
-  @page {
-    margin: 8mm 10mm;
-    size: portrait;
-  }
-
-  body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Compactar contenedor principal */
-  .hoja-container {
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  /* Reducir espacio del encabezado y datos del paciente */
-  .clinica-header {
-    margin-bottom: 10px !important;
-    padding-bottom: 4px !important;
-
-    .nombre-clinica { font-size: 12px !important; }
-    .titulo-form { font-size: 13px !important; margin-top: 2px !important; }
-  }
-
-  .datos-paciente-grid {
-    margin-bottom: 10px !important;
-    
-    .campo {
-      padding: 4px 6px !important;
-      label { font-size: 9px !important; margin-bottom: 2px !important; }
-      input { font-size: 11px !important; padding: 1px !important; }
-    }
-  }
-
-  /* Compactar celdas de la tabla para maximizar filas por página */
-  .tabla-suministros {
-    margin-top: 5px !important;
-
-    th, td {
-      padding: 2px 4px !important; /* Padding ultra reducido */
-      font-size: 10px !important;
-      height: 18px !important;
-    }
-
-    input[type="number"],
-    input[type="text"],
-    input[type="date"] {
-      font-size: 10px !important;
-      padding: 0 !important;
-      border: none !important;
-    }
-  }
-
-  /* Ajustes en sección de totales */
-  .seccion-totales {
-    margin-top: 10px !important;
-
-    .totales-box {
-      width: 220px !important;
-      .total-row { padding: 4px 8px !important; font-size: 11px !important; }
-      .total-final { font-size: 12px !important; }
-    }
-  }
-
-  /* Ocultar elementos interactivos */
-  .no-print,
-  .footer-actions,
-  .btn-eliminar,
-  .form-control-select,
-  .acciones-turnos {
-    display: none !important;
-  }
-
-  .only-print {
-    display: inline-block !important;
-    font-size: 10px !important;
-    font-weight: bold;
-  }
-
-  /* Mantener colores de turnos */
-  tr.turno-azul { color: #1a56db !important; .texto-impresion-insumo { color: #1a56db !important; } }
-  tr.turno-verde { color: #0e9f6e !important; .texto-impresion-insumo { color: #0e9f6e !important; } }
-  tr.turno-rojo { color: #e02424 !important; .texto-impresion-insumo { color: #e02424 !important; } }
-}
 .celda-articulo {
   vertical-align: middle;
   padding: 4px 6px !important;
@@ -461,7 +238,7 @@ tr.turno-rojo {
 
       .input-nombre-libre {
         flex: 2;
-        background-color: #fffbeb; // Fondo sutil amarillento indicando edición libre
+        background-color: #fffbeb;
         border-color: #fcd34d;
       }
 
@@ -503,34 +280,325 @@ tr.turno-rojo {
     }
   }
 }
-// Resaltado visual para el paciente que se está editando
-.status-badge {
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  
-  &.edicion {
-    background-color: #d97706 !important; // Naranja llamativo
-    color: #ffffff !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+
+// ==========================================
+// 5. BOTONES DE ACCIÓN EN FILA (ARRIBA, ABAJO, ELIMINAR)
+// ==========================================
+.celda-acciones {
+  text-align: center;
+  vertical-align: middle;
+
+  .acciones-fila-flex {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    .btn-orden {
+      background-color: #edf2f7;
+      border: 1px solid #cbd5e0;
+      color: #4a5568;
+      border-radius: 3px;
+      padding: 3px 6px;
+      font-size: 11px;
+      cursor: pointer;
+      line-height: 1;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background-color: #3182ce;
+        border-color: #3182ce;
+        color: #ffffff;
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+    }
+
+    .btn-eliminar-fila {
+      background-color: #fed7d7;
+      border: 1px solid #feb2b2;
+      color: #c53030;
+      border-radius: 3px;
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: #e53e3e;
+        border-color: #e53e3e;
+        color: #ffffff;
+      }
+    }
   }
 }
 
-.campo-paciente-destacado {
-  .label-paciente {
-    color: #1e3a8a !important; // Azul oscuro institucional
-    font-weight: 800 !important;
-    font-size: 0.85rem !important;
+// ==========================================
+// 6. COLORES POR TURNO
+// ==========================================
+tr.turno-azul {
+  select, input, span {
+    color: #1a56db !important;
+    font-weight: bold !important;
   }
+}
 
-  .input-paciente-resaltado {
-    font-size: 1.15rem !important; // Letra significativamente más grande
-    font-weight: 800 !important;
-    color: #0f172a !important;
-    text-transform: uppercase;
-    
-    &.input-edicion-activa {
-      background-color: #eff6ff !important; // Fondo azul claro que resalta la lectura
-      border-bottom: 2px solid #2563eb !important;
+tr.turno-verde {
+  select, input, span {
+    color: #0e9f6e !important;
+    font-weight: bold !important;
+  }
+}
+
+tr.turno-rojo {
+  select, input, span {
+    color: #e02424 !important;
+    font-weight: bold !important;
+  }
+}
+
+// ==========================================
+// 7. BOTONES AÑADIR FILA POR TURNO
+// ==========================================
+.acciones-turnos {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+
+  .btn-turno {
+    padding: 8px 16px;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: transform 0.1s ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &.azul {
+      background-color: #2b6cb0;
+      &:hover { background-color: #2c5282; }
+    }
+
+    &.verde {
+      background-color: #2f855a;
+      &:hover { background-color: #22543d; }
+    }
+
+    &.rojo {
+      background-color: #c53030;
+      &:hover { background-color: #9b2c2c; }
     }
   }
+}
+
+// ==========================================
+// 8. DESGLOSE DE TOTALES
+// ==========================================
+.seccion-totales {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 25px;
+
+  .totales-box {
+    width: 280px;
+    border: 1px solid #000;
+    background-color: #fff;
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      font-size: 13px;
+      border-bottom: 0.5px solid #ccc;
+    }
+
+    .total-final {
+      background-color: #ffffcc;
+      font-weight: bold;
+      font-size: 15px;
+      border-bottom: none;
+    }
+  }
+}
+
+// ==========================================
+// 9. FOOTER Y BOTONES PRINCIPALES
+// ==========================================
+.footer-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+
+  button {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .btn-guardar {
+    background-color: #007c0079;
+    color: white;
+    font-size: 18px;
+    &:hover { background-color: #132963; }
+  }
+
+  .btn-imprimir-hoja {
+    background-color: #2c7a7b;
+    color: white;
+    &:hover { background-color: #234e52; }
+  }
+
+  .btn-procesar {
+    background-color: #4a5568;
+    color: white;
+    &:hover { background-color: #2d3748; }
+    &:disabled {
+      background-color: #cbd5e0;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ==========================================
+// 10. VISIBILIDAD E IMPRESIÓN (PDF)
+// ==========================================
+.only-print {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    margin: 8mm 10mm;
+    size: portrait;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .hoja-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .clinica-header {
+    margin-bottom: 10px !important;
+    padding-bottom: 4px !important;
+    .nombre-clinica { font-size: 12px !important; }
+    .titulo-form { font-size: 13px !important; margin-top: 2px !important; }
+  }
+
+  .datos-paciente-grid {
+    margin-bottom: 10px !important;
+    .campo {
+      padding: 4px 6px !important;
+      label { font-size: 9px !important; margin-bottom: 2px !important; }
+      input { font-size: 11px !important; padding: 1px !important; }
+    }
+  }
+
+  .tabla-suministros {
+    margin-top: 5px !important;
+
+    th, td {
+      padding: 2px 4px !important;
+      font-size: 10px !important;
+      height: 18px !important;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="date"] {
+      font-size: 10px !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+  }
+
+  .seccion-totales {
+    margin-top: 10px !important;
+    .totales-box {
+      width: 220px !important;
+      .total-row { padding: 4px 8px !important; font-size: 11px !important; }
+      .total-final { font-size: 12px !important; }
+    }
+  }
+  /* Agarre Drag & Drop */
+.drag-handle {
+  cursor: grab;
+  color: #718096;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+/* Efectos visuales de Angular CDK al arrastrar */
+.cdk-drag-preview {
+  display: table;
+  box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+  background-color: #ffffff;
+  opacity: 0.95;
+
+  td {
+    padding: 6px;
+    border: 1px solid #cbd5e0;
+  }
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+  background-color: #edf2f7;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+tbody.cdk-drop-list-dragging tr:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+  .no-print,
+  .footer-actions,
+  .celda-acciones,
+  .form-control-select,
+  .acciones-turnos {
+    display: none !important;
+  }
+
+  .only-print {
+    display: inline-block !important;
+    font-size: 10px !important;
+    font-weight: bold;
+  }
+
+  tr.turno-azul { color: #1a56db !important; .texto-impresion-insumo { color: #1a56db !important; } }
+  tr.turno-verde { color: #0e9f6e !important; .texto-impresion-insumo { color: #0e9f6e !important; } }
+  tr.turno-rojo { color: #e02424 !important; .texto-impresion-insumo { color: #e02424 !important; } }
 }

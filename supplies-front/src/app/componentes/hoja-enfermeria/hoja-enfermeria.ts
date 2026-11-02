@@ -4,17 +4,18 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { SuministrosService } from '../../servicios/suministros';
 import { Router } from '@angular/router';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-hoja-enfermeria',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
   templateUrl: './hoja-enfermeria.html',
   styleUrls: ['./hoja-enfermeria.scss']
 })
 export class HojaEnfermeriaComponent implements OnInit {
   hojaForm!: FormGroup;
-  apiBaseUrl = 'http://192.168.100.10:8082/api';
+  apiBaseUrl = 'http://192.168.0.64:8082/api';
 
   catalogoInsumos: any[] = [];
   listaEventosActivos: any[] = [];
@@ -42,7 +43,6 @@ export class HojaEnfermeriaComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarCatalogoInsumos();
     this.hojaForm = this.fb.group({
       eventoId: [null],
       nombrePaciente: ['', Validators.required],
@@ -54,23 +54,34 @@ export class HojaEnfermeriaComponent implements OnInit {
       consumos: this.fb.array([]) 
     });
 
+    this.cargarCatalogoInsumos();
     this.cargarEventosActivos();
     this.agregarFila();
-
-    this.hojaForm.valueChanges.subscribe(() => {
-      this.calcularTotales();
-    });
   }
 
   cargarCatalogoInsumos(): void {
     this.http.get<any[]>(`${this.apiBaseUrl}/consumos/insumos`).subscribe({
       next: (insumosBD) => {
-        this.catalogoInsumos = insumosBD;
-        if (this.idEventoActual) {
-          this.calcularTotales();
-        }
+        this.catalogoInsumos = insumosBD || [];
+        this.reinyectarPreciosCatalogo();
+        this.calcularTotales();
       },
       error: (err) => console.error('Error al cargar catálogo:', err)
+    });
+  }
+
+  private reinyectarPreciosCatalogo(): void {
+    if (!this.catalogoInsumos.length || !this.consumos.length) return;
+
+    this.consumos.controls.forEach((control) => {
+      const valores = control.getRawValue();
+      if (!valores.esManual && valores.insumoId) {
+        const itemCat = this.catalogoInsumos.find(i => String(i.id || i.idInsumo) === String(valores.insumoId));
+        if (itemCat) {
+          const precio = Number(itemCat.precioUnitario || itemCat.precio_unitario || itemCat.precio || 0);
+          control.patchValue({ precioUnitario: precio }, { emitEvent: false });
+        }
+      }
     });
   }
 
@@ -78,7 +89,6 @@ export class HojaEnfermeriaComponent implements OnInit {
     return this.hojaForm.get('consumos') as FormArray;
   }
 
-  // 🛠️ CORRECCIÓN 1: Se remueve Validators.required de insumoId para permitir filas libres
   crearFilaConsumo(turnoColor: string = 'azul'): FormGroup {
     return this.fb.group({
       insumoId: [''],
@@ -97,6 +107,7 @@ export class HojaEnfermeriaComponent implements OnInit {
 
   agregarFila(turnoColor: string = 'azul'): void {
     this.consumos.push(this.crearFilaConsumo(turnoColor));
+    this.calcularTotales();
   }
 
   eliminarFila(index: number): void {
@@ -114,11 +125,12 @@ export class HojaEnfermeriaComponent implements OnInit {
         precioManual: 0
       });
     }
+    this.calcularTotales();
   }
 
   obtenerNombreInsumo(insumoId: any): string {
     if (!insumoId) return '';
-    const insumo = this.catalogoInsumos.find(i => (i.id || i.idInsumo) == insumoId);
+    const insumo = this.catalogoInsumos.find(i => String(i.id || i.idInsumo) === String(insumoId));
     return insumo ? (insumo.descripcion || insumo.nombre) : '';
   }
 
@@ -161,11 +173,11 @@ export class HojaEnfermeriaComponent implements OnInit {
         this.consumos.removeAt(0);
       }
       this.agregarFila();
+      this.calcularTotales();
       this.cdr.detectChanges();
     }
   }
 
-  // 🛠️ CORRECCIÓN 2: Mapeo robusto de campos manuales al cargar el evento guardado
   mapearDatosAlFormulario(data: any): void {
     const fechaNacLimpia = data.fechaNacimiento ? String(data.fechaNacimiento).substring(0, 10) : '';
     this.hojaForm.patchValue({
@@ -184,11 +196,9 @@ export class HojaEnfermeriaComponent implements OnInit {
     if (data.detalles && data.detalles.length > 0) {
       data.detalles.forEach((det: any) => {
         const turnoGuardado = det.turno || det.colorTurno || 'azul';
-        
-        // Detecta si es manual revisando si no hay insumoId o viene descripcionManual
         const esManualRegistrado = (!det.insumoId || det.insumoId === 0) || !!det.descripcionManual;
         const nombreLibre = det.descripcionManual || det.descripcion || det.nombreInsumo || '';
-        const precioLibre = det.precioUnitario || det.precio_unitario || 0;
+        const precioLibre = Number(det.precioUnitario || det.precio_unitario || 0);
 
         const filaGroup = this.fb.group({
           insumoId: [det.insumoId || ''],
@@ -209,44 +219,96 @@ export class HojaEnfermeriaComponent implements OnInit {
       this.agregarFila();
     }
     
+    this.reinyectarPreciosCatalogo();
     this.calcularTotales();
     this.cdr.detectChanges();
   }
 
-  onInsumoChange(index: number): void {
-    const fila = this.consumos.at(index);
-    const insumoSeleccionadoId = fila.get('insumoId')?.value;
-    const insumo = this.catalogoInsumos.find(i => (i.id || i.idInsumo) == insumoSeleccionadoId);
+  onInsumoChange(index: number, event?: any): void {
+  const fila = this.consumos.at(index);
+  
+  // Obtiene el valor directamente del evento o del FormControl
+  const targetValue = event?.target?.value ?? fila.get('insumoId')?.value;
 
-    if (insumo) {
-      fila.patchValue({
-        precioUnitario: insumo.precioUnitario || insumo.precio_unitario || insumo.precio || 0
-      }, { emitEvent: false });
-    }
+  if (!targetValue || targetValue === 'null') {
+    fila.patchValue({ precioUnitario: 0, costeo: 0 });
     this.calcularTotales();
+    return;
   }
 
+  // Busca el insumo seleccionado en el catálogo
+  const insumo = this.catalogoInsumos.find(i => String(i.id || i.idInsumo) === String(targetValue));
+
+  if (insumo) {
+    const precio = Number(insumo.precioUnitario || insumo.precio_unitario || insumo.precio || 0);
+    const cantidad = Number(fila.get('cantidad')?.value) || 1;
+    
+    fila.patchValue({
+      insumoId: insumo.id || insumo.idInsumo,
+      precioUnitario: precio,
+      costeo: cantidad * precio
+    }, { emitEvent: false });
+  }
+
+  this.calcularTotales();
+}
   calcularTotales(): void {
     let acumSubtotal = 0;
 
-    this.consumos.controls.forEach((control) => {
-      const esManual = control.get('esManual')?.value;
-      const cantidad = control.get('cantidad')?.value || 0;
-      
-      const precio = esManual 
-        ? (control.get('precioManual')?.value || 0) 
-        : (control.get('precioUnitario')?.value || 0);
+    if (this.consumos && this.consumos.controls.length > 0) {
+      this.consumos.controls.forEach((control) => {
+        const valores = control.getRawValue();
+        const cantidad = Number(valores.cantidad) || 0;
         
-      const costeoFila = cantidad * precio;
+        let precio = 0;
+        if (valores.esManual) {
+          precio = Number(valores.precioManual) || 0;
+        } else {
+          precio = Number(valores.precioUnitario) || 0;
+          if (precio === 0 && valores.insumoId && this.catalogoInsumos.length > 0) {
+            const itemCat = this.catalogoInsumos.find(i => String(i.id || i.idInsumo) === String(valores.insumoId));
+            if (itemCat) {
+              precio = Number(itemCat.precioUnitario || itemCat.precio_unitario || itemCat.precio || 0);
+              control.get('precioUnitario')?.setValue(precio, { emitEvent: false });
+            }
+          }
+        }
 
-      control.patchValue({ costeo: costeoFila }, { emitEvent: false });
-      acumSubtotal += costeoFila;
-    });
+        const costeoFila = cantidad * precio;
+        control.get('costeo')?.setValue(costeoFila, { emitEvent: false });
+        acumSubtotal += costeoFila;
+      });
+    }
 
     this.subtotal = acumSubtotal;
-    this.iva = this.subtotal * 0.16;
-    this.total = this.subtotal + this.iva;
+    this.iva = +(this.subtotal * 0.16);
+    this.total = +(this.subtotal + this.iva);
+
+    this.cdr.detectChanges();
   }
+
+  // 👇 GETTERS PARA ENLACE DINÁMICO EN EL HTML 👇
+  get subtotalCalculado(): number {
+    let acum = 0;
+    if (this.consumos && this.consumos.length > 0) {
+      for (const ctrl of this.consumos.controls) {
+        const v = ctrl.getRawValue();
+        const cant = Number(v.cantidad) || 0;
+        const prec = v.esManual ? (Number(v.precioManual) || 0) : (Number(v.precioUnitario) || 0);
+        acum += (cant * prec);
+      }
+    }
+    return acum;
+  }
+
+  get ivaCalculado(): number {
+    return this.subtotalCalculado * 0.16;
+  }
+
+  get totalCalculado(): number {
+    return this.subtotalCalculado + this.ivaCalculado;
+  }
+  // 👆 FIN DE GETTERS 👆
 
   toggleModoManual(index: number): void {
     const fila = this.consumos.at(index);
@@ -257,44 +319,43 @@ export class HojaEnfermeriaComponent implements OnInit {
       insumoId: '',
       nombreManual: '',
       precioManual: 0,
-      precioUnitario: 0
+      precioUnitario: 0,
+      costeo: 0
     });
     
     this.calcularTotales();
   }
 
-  // 🛠️ CORRECCIÓN 3: Mapeo idéntico y consistente tanto para MODO CREACIÓN como EDICIÓN
   guardarOActualizarHoja(): void {
     const datosFormulario = this.hojaForm.getRawValue();
 
     const consumosMapeados = datosFormulario.consumos.map((c: any) => ({
       insumoId: c.esManual ? null : (c.insumoId ? Number(c.insumoId) : null),
       descripcionManual: c.esManual ? c.nombreManual : null,
-      precioUnitario: c.esManual ? Number(c.precioManual) : null,
-      cantidad: Number(c.cantidad),
+      precioUnitario: c.esManual ? Number(c.precioManual || 0) : Number(c.precioUnitario || 0),
+      cantidad: Number(c.cantidad || 1),
       cantidadRecibida: c.cantidadRecibida,
       ingresoAlSistema: c.ingresoAlSistema,
       fechaAplicacion: c.fechaAplicacion,
       turno: c.turno
     }));
 
-    if (this.esModoEdicion && this.idEventoActual) {
-      const payloadEdicion = {
-        eventoId: this.idEventoActual,
-        habitacion: datosFormulario.habitacion,
-        procedimiento: datosFormulario.procedimiento,
-        fecha: datosFormulario.fecha,
-        paciente: {
-          nombre: datosFormulario.nombrePaciente,
-          fechaNacimiento: datosFormulario.fechaNacimiento
-        },
-        medico: {
-          nombre: datosFormulario.medicoTratante
-        },
-        consumos: consumosMapeados
-      };
+    const payload = {
+      habitacion: datosFormulario.habitacion,
+      procedimiento: datosFormulario.procedimiento,
+      fecha: datosFormulario.fecha,
+      paciente: { 
+        nombre: datosFormulario.nombrePaciente,
+        fechaNacimiento: datosFormulario.fechaNacimiento
+      },
+      medico: { 
+        nombre: datosFormulario.medicoTratante 
+      },
+      consumos: consumosMapeados
+    };
 
-      this.http.put(`${this.apiBaseUrl}/consumos/evento/${this.idEventoActual}`, payloadEdicion).subscribe({
+    if (this.esModoEdicion && this.idEventoActual) {
+      this.http.put(`${this.apiBaseUrl}/consumos/evento/${this.idEventoActual}`, payload).subscribe({
         next: () => {
           alert('¡Hoja de enfermería y datos del paciente actualizados con éxito!');
           this.cargarEventosActivos();
@@ -304,23 +365,8 @@ export class HojaEnfermeriaComponent implements OnInit {
           alert('Ocurrió un error al actualizar los datos.');
         }
       });
-
     } else {
-      const nuevaCabecera = {
-        habitacion: datosFormulario.habitacion,
-        procedimiento: datosFormulario.procedimiento,
-        fecha: datosFormulario.fecha,
-        paciente: { 
-          nombre: datosFormulario.nombrePaciente,
-          fechaNacimiento: datosFormulario.fechaNacimiento
-        },
-        medico: { 
-          nombre: datosFormulario.medicoTratante 
-        },
-        consumos: consumosMapeados
-      };
-
-      this.http.post(`${this.apiBaseUrl}/consumos/evento`, nuevaCabecera).subscribe({
+      this.http.post(`${this.apiBaseUrl}/consumos/evento`, payload).subscribe({
         next: (res: any) => {
           alert('¡Paciente y Hoja de Enfermería registrados correctamente!');
           this.esModoEdicion = true;
@@ -344,4 +390,35 @@ export class HojaEnfermeriaComponent implements OnInit {
   imprimirHoja(): void {
     window.print();
   }
+
+  reordenarFilas(event: CdkDragDrop<any[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+
+    const filaMovida = this.consumos.at(event.previousIndex);
+    this.consumos.removeAt(event.previousIndex);
+    this.consumos.insert(event.currentIndex, filaMovida);
+
+    this.calcularTotales();
+    this.cdr.detectChanges();
+  }
+
+  moverFilaArriba(index: number): void {
+  if (index > 0) {
+    const filaActual = this.consumos.at(index);
+    this.consumos.removeAt(index);
+    this.consumos.insert(index - 1, filaActual);
+    this.calcularTotales();
+    this.cdr.detectChanges();
+  }
+}
+
+moverFilaAbajo(index: number): void {
+  if (index < this.consumos.length - 1) {
+    const filaActual = this.consumos.at(index);
+    this.consumos.removeAt(index);
+    this.consumos.insert(index + 1, filaActual);
+    this.calcularTotales();
+    this.cdr.detectChanges();
+  }
+}
 }

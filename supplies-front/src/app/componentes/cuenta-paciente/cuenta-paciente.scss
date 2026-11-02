@@ -32,13 +32,29 @@
   }
 }
 
-/* Encabezados y Datos Paciente */
-.fecha-encabezado {
-  text-align: center;
-  font-size: 14px;
-  margin-bottom: 30px;
-  color: #1a202c;
-  font-weight: 500;
+/* Encabezado Institucional (Logo y Fecha) */
+.encabezado-institucional {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  width: 100%;
+
+  .logo-superior-izq {
+    .logo-img {
+      max-width: 155px;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+  }
+
+  .fecha-encabezado {
+    text-align: right;
+    font-size: 14px;
+    color: #1a202c;
+    font-weight: 500;
+  }
 }
 
 .info-paciente-grid {
@@ -52,6 +68,7 @@
     font-size: 22px;
     font-weight: 800;
     color: #1a202c;
+    text-transform: uppercase;
   }
 
   .nombre-doctor {
@@ -67,17 +84,18 @@
     font-weight: bold;
     color: #2d3748;
     line-height: 1.4;
+    text-transform: uppercase;
   }
 }
 
-/* Estructura Exacta de la Tabla */
+/* Estructura de la Tabla */
 .tabla-desglose {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
 
   .banner-titulo th {
-    background-color: #a3c1f7; /* Azul exacto de la barra superior */
+    background-color: #a3c1f7;
     color: #000;
     text-align: center;
     padding: 10px;
@@ -97,56 +115,75 @@
   }
 
   tbody td {
-    padding: 8px 10px;
+    padding: 3px 10px;
     font-size: 13px;
     border-bottom: 1px solid #edf2f7;
     color: #2d3748;
   }
 
-  /* Alineaciones de Columnas */
+  /* Alineaciones */
   .col-center { text-align: center; }
   .col-left { text-align: left; }
   .col-right { text-align: right; }
   .bold { font-weight: 600; }
+}
 
-  /* Bloque de Totales Inferior */
-  tfoot {
-    td.sin-borde { border: none; }
+/* Bloque de Totales Desacoplado (Evita repetirse en hojas previas) */
+.bloque-totales-final {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0;
+  width: 100%;
+  page-break-inside: avoid;
+  break-inside: avoid;
 
-    .total-label, .total-label-final {
-      text-align: right;
+  .tabla-resumen-totales-cuenta {
+    width: 35%;
+    border-collapse: collapse;
+
+    td {
       padding: 6px 12px;
       font-size: 13px;
+    }
+
+    .total-label {
+      text-align: left;
       font-weight: bold;
       background-color: #f7fafc;
       border-left: 1px solid #cbd5e0;
       border-bottom: 1px solid #cbd5e0;
+      color: #2d3748;
     }
 
-    .total-value, .total-value-final {
+    .total-value {
       text-align: right;
-      padding: 6px 12px;
-      font-size: 13px;
       border-right: 1px solid #cbd5e0;
       border-bottom: 1px solid #cbd5e0;
+      color: #2d3748;
     }
 
     .row-total-final {
       .total-label-final {
-        background-color: #ffeb9c; /* Amarillo dorado exacto del total */
+        background-color: #ffeb9c;
+        border-left: 1px solid #d69e2e;
         border-bottom: 1px solid #d69e2e;
+        font-weight: bold;
+        color: #000;
       }
       .total-value-final {
         background-color: #ffeb9c;
+        border-right: 1px solid #d69e2e;
+        border-bottom: 1px solid #d69e2e;
         font-weight: bold;
         font-size: 15px;
-        border-bottom: 1px solid #d69e2e;
+        color: #000;
+        text-align: right;
       }
     }
   }
 }
 
-/* Estilos de Edición Suaves (Invisibles al imprimir) */
+/* Estilos de Edición Suaves */
 .input-table-inline {
   width: 90%;
   border: 1px solid #cbd5e0;
@@ -179,7 +216,7 @@
   gap: 4px;
 }
 
-/* Reglas de Impresión Impecables */
+/* Reglas de Impresión */
 @media print {
   .no-print {
     display: none !important;
@@ -194,5 +231,23 @@
     margin: 0 !important;
     max-width: 100% !important;
     box-shadow: none !important;
+  }
+
+  .logo-img {
+    max-width: 140px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .banner-titulo th,
+  .row-total-final .total-label-final,
+  .row-total-final .total-value-final {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .bloque-totales-final {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
